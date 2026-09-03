@@ -696,30 +696,6 @@
             overflow: hidden;
         }
 
-        .modal-card::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 45%;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 100%);
-            pointer-events: none;
-            border-top-left-radius: 28px;
-            border-top-right-radius: 28px;
-        }
-
-        .modal-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 65%);
-            pointer-events: none;
-        }
-
         #gestureGuideOverlay {
             position: absolute;
             top: 0;
@@ -905,7 +881,7 @@
     <!-- Intro Pages -->
     <section id="pageA" class="page active">
         <div class="intro-text-group">
-            <p class="en-text">This website was created to archive rare endangered hibiscus species native to isolated islands around the world.</p>
+            <p class="en-text">This website was created to archive rare endangered<br>hibiscus species native to isolated islands around the world.</p>
             <p class="ko-text">이 웹사이트는 전 세계 고립된 섬에 자생하는<br>희귀 멸종위기 히비스커스 종들을 기록하기 위해 만들어졌습니다.</p>
         </div>
     </section>
@@ -928,7 +904,6 @@
         <button id="exploreBtn" class="explore-btn">EXPLORE</button>
     </section>
 
-    <!-- Home Page -->
     <section id="pageHome" class="page">
         <div id="home-caustic-container"></div>
 
@@ -1191,7 +1166,7 @@
                         habitat: "마스카렌 제도(레위니옹 및 모리셔스) 아고산대 운무림",
                         feature: "강렬한 진홍빛 꽃잎과 독특하게 돌출된 중심 기둥형 수술대를 지녔으며, 마스카렌 섬 특유의 험준한 화산 능선 절벽을 지키는 상징적인 고유종입니다.",
                         islandKey: "mascarene_boryanus",
-                        video: "red.mp4",
+                        video: "",
                         fallbackColor: "#B91C1C",
                         fallbackCenter: "#7F1D1D",
                         flipped: false
@@ -1202,7 +1177,7 @@
                         habitat: "모리셔스 섬 쾨르 드 가르드(Corps de Garde) 및 르 몽(Le Morne) 산록",
                         feature: "야생에 성체 개체가 수십 그루 미만만 남아 있는 심각한 멸종위급종(CR)입니다. 섬세하고 우아한 선홍색 꽃잎이 보석처럼 피어납니다.",
                         islandKey: "mascarene_fragilis",
-                        video: "orange.mp4",
+                        video: "",
                         fallbackColor: "#E11D48",
                         fallbackCenter: "#9F1239",
                         flipped: false
@@ -1213,7 +1188,7 @@
                         habitat: "모리셔스 블랙리버 협곡(Black River Gorges) 일대",
                         feature: "한때 완전히 멸종된 것으로 여겨졌다가 기적적으로 재발견된 종으로, 부드러운 연분홍빛 꽃잎과 짙은 자줏빛 심장부가 특징적인 희귀종입니다.",
                         islandKey: "mascarene_genevii",
-                        video: "white 1.mp4",
+                        video: "",
                         fallbackColor: "#F472B6",
                         fallbackCenter: "#BE185D",
                         flipped: true
@@ -1224,7 +1199,7 @@
                         habitat: "로드리게스 섬(Rodrigues) 및 레위니옹 고유 열대 삼림",
                         feature: "백합을 연상시키는 길쭉하고 우아한 나팔 모양 꽃잎을 지녔으며, 피어날 때 황금빛 주황색에서 시간이 지나며 오렌지-레드로 깊어지는 독특한 색변화를 보입니다.",
                         islandKey: "mascarene_liliiflorus",
-                        video: "yellow.mp4",
+                        video: "",
                         fallbackColor: "#F59E0B",
                         fallbackCenter: "#B45309",
                         flipped: false
@@ -1235,7 +1210,7 @@
                         habitat: "마스카렌 제도 저지대 및 중산간 열대 상록수림",
                         feature: "기둥 모양으로 우뚝 솟은 수술대와 대담한 황갈색-주황빛 꽃잎을 자랑하며, 고립된 섬 생태계의 수분 매개자 조류들과 오랜 공생 관계를 맺어왔습니다.",
                         islandKey: "mascarene_columnaris",
-                        video: "orange.mp4",
+                        video: "",
                         fallbackColor: "#EA580C",
                         fallbackCenter: "#7C2D12",
                         flipped: false
@@ -1248,7 +1223,7 @@
                         habitat: "호주령 남태평양 필립 섬(Phillip Island)의 단일 자생 계곡",
                         feature: "세계에서 가장 희귀한 야생 식물 중 하나로, 야생에는 단 한 곳의 자생 군락만이 전해집니다. 우아한 연한 황록색-크림색 꽃잎으로 피어나 점차 자줏빛 와인색으로 성숙하는 신비로운 꽃입니다.",
                         islandKey: "phillip_insularis",
-                        video: "yellow.mp4",
+                        video: "",
                         fallbackColor: "#FEF08A",
                         fallbackCenter: "#581C87",
                         flipped: false
@@ -1261,7 +1236,7 @@
                         habitat: "피지 비티레부(Viti Levu) 섬의 울창한 다습 열대우림 하천변",
                         feature: "피지의 깊은 계곡 운무림에서 자생하는 고유종으로, 맑고 투명한 분홍빛 꽃잎과 섬세한 꽃받침을 지닌 고유 식물입니다.",
                         islandKey: "fiji_bennettii",
-                        video: "white 1.mp4",
+                        video: "",
                         fallbackColor: "#FBCFE8",
                         fallbackCenter: "#DB2777",
                         flipped: false
@@ -1272,7 +1247,7 @@
                         habitat: "피지 타베우니(Taveuni) 화산섬 산악 고원 지대",
                         feature: "‘정원의 섬’ 타베우니의 짙은 화산 토양에서 피어나는 화려한 선홍색 꽃으로, 피지 열대 고산 식물상의 독특한 진화 양상을 보여줍니다.",
                         islandKey: "fiji_bragliae",
-                        video: "red.mp4",
+                        video: "",
                         fallbackColor: "#EF4444",
                         fallbackCenter: "#991B1B",
                         flipped: true
@@ -1283,7 +1258,7 @@
                         habitat: "피지 바누아레부(Vanua Levu) 섬 남부 험준한 산악 능선",
                         feature: "따뜻한 주황빛과 살구색 꽃잎이 조화를 이루는 희귀 야생종으로, 태평양 제도 생태계 파편화로 자생지가 철저히 보호받고 있습니다.",
                         islandKey: "fiji_macverryi",
-                        video: "orange.mp4",
+                        video: "",
                         fallbackColor: "#FB923C",
                         fallbackCenter: "#C2410C",
                         flipped: false
@@ -1294,7 +1269,7 @@
                         habitat: "피지 오발라우(Ovalau) 및 비티레부 섬의 울창한 열대 삼림",
                         feature: "19세기 식물학자 야코프 스토르크(Jacob Storck)가 발견한 피지의 역사적 고유종입니다. 우아한 연분홍빛 꽃잎을 피우며 오늘날 재배되는 수많은 히비스커스 품종의 귀중한 야생 선조로 평가받습니다.",
                         islandKey: "fiji_storckii",
-                        video: "white 2.mp4",
+                        video: "",
                         fallbackColor: "#FCE7F3",
                         fallbackCenter: "#BE185D",
                         flipped: false
@@ -1346,7 +1321,6 @@
                 });
             }
 
-            // Function to dynamically build archive slides and pagination for the selected island
             function renderIslandArchive(islandId) {
                 const container = document.getElementById('archiveContainer');
                 const pagination = document.getElementById('archivePagination');
@@ -1361,10 +1335,11 @@
                 let slidesHtml = '';
                 speciesList.forEach((sp) => {
                     const flippedClass = sp.flipped ? 'flipped-flower' : '';
+                    const videoTag = sp.video ? `<video class="flower-video" src="${sp.video}" playsinline muted loop preload="auto" onerror="this.style.display='none'"></video>` : '';
                     slidesHtml += `
                         <div class="species-section" style="background-color: #ffffff; height: ${100 / totalSpecies}%;">
                             <div class="flower-container ${flippedClass}">
-                                <video class="flower-video" src="${sp.video}" playsinline muted loop preload="auto" onerror="this.style.display='none'"></video>
+                                ${videoTag}
                                 <svg class="flower-fallback-art" viewBox="0 0 200 200" fill="none" style="position: absolute; width: 320px; height: 320px; opacity: 0.85;">
                                     <circle cx="100" cy="100" r="80" fill="${sp.fallbackColor}" opacity="0.2"/>
                                     <path d="M100 20 Q120 70 170 80 Q130 110 140 170 Q100 130 60 170 Q70 110 30 80 Q80 70 100 20 Z" fill="${sp.fallbackColor}" opacity="0.85"/>
