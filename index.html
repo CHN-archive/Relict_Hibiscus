@@ -3,57 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hawaii Native Hibiscus Digital Archive</title>
+    <title>Endangered hibiscus archive studio</title>
     
-    <!-- MediaPipe 라이브러리 로드 (제스처 완벽 복원) -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
-    
-    <!-- Three.js 및 OrbitControls 라이브러리 로드 (3D 지형 연출용) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     
-    <!-- 구글 폰트 링크 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght=400;500;600;700&family=Noto+Sans+KR:wght=300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
     
     <style>
-        /* 기본 레이아웃 스타일 초기화 */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body, html { 
             height: 100%; 
             width: 100%; 
-            background-color: #ffffff; 
+            background-color: #FAF9F5; 
             overflow: hidden; 
             -webkit-font-smoothing: antialiased;
             font-family: 'Noto Sans KR', sans-serif;
+            cursor: default;
         }
 
-        /* 미디어파이프 카메라 프레임 수집용 비디오 레이어 (숨김 처리) */
-        .input_video { display: none; }
+        body.custom-cursor-active * {
+            cursor: none !important;
+        }
         
-        /* 제스처 인식 실시간 피드백 웹캠 화면 (이전 위치인 좌측 하단 복원) */
+        #customCursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            transform: translate3d(0, 0, 0);
+            will-change: transform;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        body.custom-cursor-active #customCursor {
+            opacity: 1;
+        }
+
+        .cursor-dot {
+            width: 5px;
+            height: 5px;
+            background-color: #1a1a1a;
+            border-radius: 50%;
+            flex-shrink: 0;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+
+        #customCursor .cursor-text {
+            font-family: 'Avant Garde', Avantgarde, 'Century Gothic', CenturyGothic, sans-serif;
+            font-size: 11px;
+            font-weight: 550;
+            letter-spacing: 0.22em;
+            color: #1a1a1a;
+            margin-left: 10px;
+            opacity: 0;
+            transform: translateX(-4px);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            white-space: nowrap;
+        }
+
+        #customCursor.hover-discover .cursor-text {
+            opacity: 0.9;
+            transform: translateX(0);
+        }
+
+        .input_video { display: none; }
+
         .output_canvas {
-            position: fixed; 
-            bottom: 80px; 
-            left: 80px; 
-            width: 180px; 
-            height: 135px;
-            border-radius: 20px; 
-            z-index: 1000; 
+            position: absolute; 
+            bottom: 40px; 
+            left: 40px; 
+            width: 160px; 
+            height: 120px;
+            border-radius: 16px; 
+            z-index: 90; 
             background: #000; 
             display: none; 
-            transform: rotateY(180deg); /* 거울 모드 대응 */
-            border: 2px solid rgba(255, 255, 255, 0.8);
+            transform: rotateY(180deg);
+            border: 1.5px solid rgba(255, 255, 255, 0.6);
             object-fit: cover; 
             box-shadow: 0 10px 25px rgba(0,0,0,0.15);
             transition: opacity 0.5s ease;
         }
         .output_canvas.active { display: block; }
 
-        /* 페이지 컨테이너 전환 애니메이션 */
         .page {
             position: absolute; 
             top: 0; 
@@ -66,16 +109,28 @@
             align-items: center;
             opacity: 0; 
             visibility: hidden; 
-            transition: opacity 1.2s cubic-bezier(0.25, 1, 0.5, 1), visibility 1.2s; 
+            transition: opacity 0.8s cubic-bezier(0.25, 1, 0.5, 1), visibility 0.8s, transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), filter 0.8s ease; 
             z-index: 1;
             padding: 20px;
+            background-color: #FAF9F5;
         }
-        .page.active { opacity: 1; visibility: visible; z-index: 10; }
+        .page.active { opacity: 1; visibility: visible; z-index: 10; transform: scale(1); filter: blur(0); }
 
-        /* 인트로 텍스트 연출 */
+        .page.transition-out {
+            opacity: 0 !important;
+            transform: scale(1.04) !important;
+            filter: blur(10px) !important;
+        }
+        
+        .page.transition-in-prep {
+            opacity: 0 !important;
+            transform: scale(0.96) !important;
+            filter: blur(8px) !important;
+        }
+
         .intro-text-group { text-align: center; max-width: 800px; padding: 0 20px; }
         .en-text { 
-            font-family: 'Avant Garde', Avantgarde, 'Century Gothic', CenturyGothic, 'Montserrat', sans-serif; 
+            font-family: 'Avant Garde', Avantgarde, 'Century Gothic', CenturyGothic, sans-serif; 
             font-weight: 500; 
             font-size: 28px; 
             color: #111111; 
@@ -93,10 +148,9 @@
             word-break: keep-all;
         }
 
-        /* 인트로 마지막 페이지 및 탐험 시작 버튼 */
         #pageD { background-color: #FAF9F5; }
         .explore-btn { 
-            font-family: 'Avant Garde', Avantgarde, 'Century Gothic', CenturyGothic, 'Montserrat', sans-serif; 
+            font-family: 'Avant Garde', Avantgarde, 'Century Gothic', CenturyGothic, sans-serif; 
             font-weight: 500;
             font-size: 14px; 
             letter-spacing: 0.5em; 
@@ -106,7 +160,7 @@
             cursor: pointer; 
             transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); 
             outline: none;
-            text-indent: 0.5em; /* 자간으로 인한 오른쪽 쏠림 방지 정렬 보정 */
+            text-indent: 0.5em;
             text-transform: uppercase;
         }
         .explore-btn:hover { 
@@ -116,14 +170,198 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
 
-        /* 메인 아카이브 인터페이스 */
-        #pageE { display: block; overflow: hidden; padding: 0; background: #ffffff; }
-        
-        /* 5단계 세션 이동용 부모 컨테이너 (하와이제도 페이지 삭제로 600% -> 500% 축소 교정) */
-        .archive-container { width: 100%; height: 500%; transition: transform 1.2s cubic-bezier(0.65, 0, 0.35, 1); }
-        .species-section { width: 100%; height: 20%; position: relative; transition: transform 1.2s ease, filter 1.2s ease; }
+        #pageHome {
+            background-color: #EAE8E3;
+            padding: 0;
+            overflow: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: flex-start;
+        }
 
-        /* 꽃 컨테이너를 전체화면 크기로 확장하여 동영상이 화면에 꽉 차도록 보정 */
+        #home-caustic-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: auto;
+        }
+
+        #home-caustic-container canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .home-title-topleft {
+            position: absolute;
+            top: 31px;
+            left: 55px;
+            z-index: 30;
+            font-family: 'Avant Garde', Avantgarde, 'Century Gothic', CenturyGothic, sans-serif;
+            font-size: 20px;
+            font-weight: 500;
+            color: #111111;
+            opacity: 0.9;
+            letter-spacing: -0.02em;
+            line-height: 1;
+            white-space: nowrap;
+            pointer-events: auto;
+        }
+
+        .nav-line-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 32px;
+            height: 32px;
+            background: transparent;
+            cursor: pointer;
+            z-index: 35;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            outline: none;
+            border: none;
+            padding: 0;
+        }
+        .nav-line-left { left: 52px; }
+        .nav-line-right { right: 52px; }
+
+        .nav-line-btn svg {
+            width: 20px;
+            height: 20px;
+            overflow: visible;
+        }
+
+        .nav-line-btn .line-always {
+            stroke: rgba(17, 17, 17, 0.8);
+            stroke-width: 2;
+            stroke-linecap: round;
+            transform-origin: center;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .nav-line-btn:hover .line-always {
+            transform: scaleY(1.4);
+        }
+
+        /* Back Button aligned with pagination vertical axis */
+        .back-line-btn {
+            position: fixed;
+            top: 31px;
+            left: 28px;
+            width: 32px;
+            height: 32px;
+            background: transparent;
+            cursor: pointer;
+            z-index: 35;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            outline: none;
+            border: none;
+            padding: 0;
+        }
+
+        .back-line-btn svg {
+            width: 20px;
+            height: 20px;
+            overflow: visible;
+        }
+
+        .back-line-btn .line-always-horiz {
+            stroke: rgba(17, 17, 17, 0.8);
+            stroke-width: 2;
+            stroke-linecap: round;
+            transform-origin: center;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .back-line-btn:hover .line-always-horiz {
+            transform: scaleX(1.4);
+        }
+
+        .home-menu-container {
+            position: absolute;
+            top: 79%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 30;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            pointer-events: auto;
+            width: auto;
+        }
+
+        .home-menu-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
+        .home-menu-item:hover {
+            opacity: 0.85;
+            transform: scale(1.05);
+        }
+        .home-menu-item .item-title-en {
+            font-family: 'Avant Garde', Avantgarde, 'Century Gothic', CenturyGothic, sans-serif;
+            font-size: 25px;
+            font-weight: 500;
+            color: #111111;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            text-transform: none;
+        }
+        .home-menu-item .item-title-ko {
+            font-family: 'Noto Sans KR', sans-serif;
+            font-size: 13px;
+            font-weight: 400;
+            color: #555555;
+            letter-spacing: -0.01em;
+            line-height: 1.4;
+        }
+
+        #pageE { 
+            display: block; 
+            overflow: hidden; 
+            padding: 0; 
+            background: #ffffff; 
+            touch-action: none;
+        }
+        .archive-container { 
+            width: 100%; 
+            height: 100%; 
+            transition: transform 1s cubic-bezier(0.25, 1, 0.5, 1); 
+            will-change: transform;
+        }
+        .species-section { 
+            width: 100%; 
+            height: 100%; 
+            position: relative; 
+            transition: transform 1.2s ease, filter 1.2s ease; 
+        }
+
         .flower-container {
             position: absolute;
             left: 0;
@@ -134,21 +372,17 @@
             align-items: center;
             justify-content: center;
             pointer-events: none;
-            z-index: 1; /* 글자 뒤쪽에 자연스럽게 안착 */
+            z-index: 1;
             transition: all 1.2s cubic-bezier(0.25, 1, 0.5, 1);
         }
         
-        /* 와이메아(좌우반전 적용 모델) 전용 정적 뒤집기 배치 클래스 */
-        .flipped-flower {
-            transform: scaleX(-1) !important;
-        }
+        .flipped-flower { transform: scaleX(-1) !important; }
 
-        /* 고해상도 개화 비디오 요소 전용 하이엔드 스타일 배치 */
         .flower-video {
             position: absolute;
             width: 100%;
             height: 100%;
-            object-fit: cover; /* 화면에 여백 없이 꽉 채움 */
+            object-fit: cover;
             pointer-events: none;
             filter: saturate(1.02) brightness(0.98);
             background-color: #ffffff;
@@ -156,10 +390,20 @@
             transition: filter 0.5s ease;
         }
 
-        /* 아카이브 텍스트 정보 레이어 오버레이 */
-        .overlay-content { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 80px 100px; display: flex; flex-direction: column; justify-content: space-between; z-index: 10; pointer-events: none; }
+        .overlay-content { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            padding: 80px 100px; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between; 
+            z-index: 10; 
+            pointer-events: none; 
+        }
         
-        /* 자생지 해설과 겹치지 않도록 최대 가로 폭을 안정적으로 제한 */
         .top-info { 
             text-align: left; 
             pointer-events: auto; 
@@ -168,67 +412,95 @@
         }
         
         .species-en { 
-            font-family: 'Avant Garde', Avantgarde, 'Century Gothic', CenturyGothic, 'Montserrat', sans-serif; 
+            font-family: 'Avant Garde', Avantgarde, 'Century Gothic', CenturyGothic, sans-serif; 
             font-weight: 700; 
-            font-size: 58px; 
+            font-size: 39px; 
             color: #111111; 
             margin-bottom: 12px; 
             line-height: 1.1; 
             text-shadow: 0 2px 10px rgba(255,255,255,0.7); 
-            white-space: nowrap; /* 줄바꿈 절대 허용 안 함 */
+            white-space: nowrap;
         }
-        .species-ko { font-family: 'Noto Sans KR', sans-serif; font-weight: 400; font-size: 26px; color: #444444; margin-bottom: 40px; letter-spacing: -0.02em; text-shadow: 0 2px 10px rgba(255,255,255,0.7); }
+        .species-ko { 
+            font-family: 'Noto Sans KR', sans-serif; 
+            font-weight: 400; 
+            font-size: 17.3px; 
+            color: #444444; 
+            margin-bottom: 35px; 
+            letter-spacing: -0.02em; 
+            text-shadow: 0 2px 10px rgba(255,255,255,0.7); 
+        }
 
-        /* 가로 배열 버튼 그룹 컨테이너 설계 */
+        /* Clean horizontal layout for info and map buttons */
         .btn-group {
             display: flex;
-            flex-direction: row; /* 가로 배열 유지 */
-            gap: 15px; 
+            flex-direction: row;
+            align-items: center;
+            gap: 28px; 
             margin-bottom: 40px;
             pointer-events: auto;
         }
 
-        /* 버튼 단독 호버 감지 구조 유지 및 크기 엄격 통일 (오작동 차단 여백 극소화) */
         .info-wrapper { 
             position: relative; 
-            display: inline-block; 
-            width: 56px;
-            height: 56px;
+            display: inline-flex; 
+            width: auto;
+            height: auto;
             transition: opacity 0.3s ease;
         }
 
-        /* 원형 테두리 굵기 1.5px (내부 영문 굵기 500과 통일) */
+        /* Minimal text buttons with underline line-drawing hover transition */
         .info-btn, .map-btn { 
-            width: 56px; 
-            height: 56px; 
-            border: 1.5px solid #1a1a1a; 
-            border-radius: 50%; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            font-family: 'Avant Garde', Avantgarde, 'Century Gothic', CenturyGothic, 'Montserrat', sans-serif; 
+            width: auto; 
+            height: auto; 
+            border: none; 
+            border-radius: 0; 
+            display: inline-block; 
+            font-family: 'Avant Garde', Avantgarde, 'Century Gothic', CenturyGothic, sans-serif; 
             font-weight: 500; 
-            font-size: 17px; 
+            font-size: 16px;
             cursor: pointer; 
             color: #1a1a1a; 
-            transition: all 0.4s ease; 
-            background: rgba(255, 255, 255, 0.85); 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
+            background: transparent; 
+            padding: 2px 0;
+            position: relative;
+            letter-spacing: 0.04em;
+            text-transform: lowercase;
+            line-height: 1.2;
+            transition: color 0.3s ease;
         }
         
-        .map-btn:hover, .info-btn:hover {
-            background: #1a1a1a; 
-            color: #ffffff; 
-            transform: scale(1.05);
+        /* Animated underline line (JARCOS style) */
+        .info-btn::after, .map-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 1.5px;
+            background-color: #1a1a1a;
+            transition: width 0.32s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
-        /* info 패널의 시작 위치를 버튼 바로 아래쪽(top: 100%)으로 조정하여 가림 방지 및 직관적 구조 연출 */
+        .info-btn:hover::after, 
+        .info-wrapper:hover .info-btn::after, 
+        .info-wrapper.force-show .info-btn::after,
+        .map-btn:hover::after {
+            width: 100%;
+        }
+
+        .map-btn:hover, .info-btn:hover {
+            background: transparent; 
+            color: #1a1a1a; 
+            transform: none;
+        }
+
         .info-panel { 
             position: absolute; 
-            top: 100%; /* 버튼 바로 아래쪽 배치 */
-            left: 0;   /* 버튼 시작선과 정렬 */
-            margin-top: 15px; /* 약간의 여백 */
-            transform: translateY(15px); 
+            top: 100%; 
+            left: 0;   
+            margin-top: 14px; 
+            transform: translateY(12px); 
             width: 420px; 
             background: rgba(18, 18, 18, 0.92); 
             color: #ffffff; 
@@ -236,35 +508,43 @@
             border-radius: 24px; 
             opacity: 0; 
             visibility: hidden; 
-            transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1); 
+            transition: all 0.45s cubic-bezier(0.25, 1, 0.5, 1); 
             backdrop-filter: blur(15px); 
             z-index: 50; 
             box-shadow: 0 20px 40px rgba(0,0,0,0.3); 
         }
         
-        /* info-wrapper에 마우스가 정확히 올라갔을 때만 패널을 띄움 */
         .info-wrapper:hover .info-panel, .info-wrapper.force-show .info-panel { 
             opacity: 1; 
             visibility: visible; 
             transform: translateY(0); 
         }
-        .info-wrapper:hover .info-btn, .info-wrapper.force-show .info-btn { 
-            background: #1a1a1a; 
-            color: #ffffff; 
-            transform: scale(1.05);
+
+        .panel-title { 
+            font-family: 'Avant Garde', Avantgarde, 'Century Gothic', CenturyGothic, sans-serif; 
+            font-weight: 600; 
+            font-size: 18px; 
+            margin-bottom: 16px; 
+            border-bottom: 1px solid rgba(255,255,255,0.15); 
+            padding-bottom: 12px; 
+            letter-spacing: 0.05em; 
+            color: #ffffff !important; 
+        }
+        .panel-text { 
+            font-size: 15px; 
+            line-height: 1.8; 
+            word-break: keep-all; 
+            color: #ffffff !important; 
+            font-weight: 300; 
+        }
+        .panel-text strong { 
+            font-weight: 600; 
+            color: #ffffff !important; 
         }
 
-        .hawaii-section .info-btn { background: transparent; border-color: rgba(26, 26, 26, 0.4); }
-        .hawaii-section .info-wrapper:hover .info-btn, .hawaii-section .info-wrapper.force-show .info-btn { background: #1a1a1a; border-color: #1a1a1a; color: #ffffff; }
-
-        .panel-title { font-family: 'Avant Garde', Avantgarde, 'Century Gothic', CenturyGothic, 'Montserrat', sans-serif; font-weight: 600; font-size: 18px; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 12px; letter-spacing: 0.05em; color: #ffffff !important; }
-        .panel-text { font-size: 15px; line-height: 1.8; word-break: keep-all; color: #ffffff !important; font-weight: 300; }
-        .panel-text strong { font-weight: 600; color: #ffffff !important; }
-
-        /* 글로벌 3D 캔버스 컨테이너 (위치값은 자바스크립트로 map 버튼 바로 아래 수직 자동 추적 매핑) */
         #canvas3d-container { 
             position: absolute; 
-            width: 420px; /* 카드를 info 패널 크기와 일치하도록 설정 */
+            width: 420px; 
             height: 420px; 
             background: rgba(255, 255, 255, 0.95); 
             border: 1.5px solid #1a1a1a;
@@ -279,7 +559,6 @@
             display: block; 
         }
 
-        /* 3D 모드가 열렸을 때 오버레이 표시 및 조작 활성화 (z-index를 95로 설정) */
         #canvas3d-container.active {
             opacity: 1;
             visibility: visible;
@@ -287,13 +566,6 @@
             z-index: 95; 
         }
 
-        /* [상호배제 락] 3D 맵이 완전히 활성화되어 떠 있을 때는 마우스 마찰 등으로 info 가 이중 노출되는 버그 완벽 차단 */
-        body.map-active .info-wrapper {
-            pointer-events: none !important;
-            opacity: 0.25;
-        }
-
-        /* 3D 지도 카드용 아기자기하고 세련된 미니멀 ✕(닫기) 버튼 */
         .close-map-btn {
             position: absolute;
             top: 20px;
@@ -305,56 +577,96 @@
             background: rgba(255, 255, 255, 0.9);
             color: #1a1a1a;
             font-size: 14px;
+            font-family: 'Avant Garde', Avantgarde, 'Century Gothic', CenturyGothic, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             cursor: pointer;
             z-index: 100;
             transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-        }
-        .close-map-btn:hover {
-            background: #1a1a1a;
-            color: #ffffff;
-            transform: scale(1.08) rotate(90deg);
         }
 
-        /* 사운드 버튼 위치: 꽃 영문이름과 수평인 화면 오른쪽 정렬 */
         .sound-btn { 
-            position: absolute; 
-            top: 80px; 
-            right: 100px; 
-            width: 58px; 
-            height: 58px; 
+            position: fixed; 
+            top: 31px; 
+            right: 60px; 
+            height: 18px; 
             border: none; 
             background: transparent; 
             cursor: pointer; 
-            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1); 
-            z-index: 100; 
-            pointer-events: auto; 
-            color: #1a1a1a; 
+            transition: opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1), visibility 0.5s; 
+            z-index: 9999; 
+            pointer-events: none; 
+            color: #111111; 
             display: flex; 
-            justify-content: center; 
             align-items: center; 
-            opacity: 0.65; 
+            gap: 10px;
+            opacity: 0; 
+            visibility: hidden;
+            padding: 0 4px;
         }
-        .sound-btn:hover { color: #1a1a1a; opacity: 1; transform: scale(1.15); }
-        .sound-btn svg { width: 26px; height: 26px; transition: transform 0.3s ease; }
-        .sound-btn:active svg { transform: scale(0.9); }
+        .sound-btn.visible {
+            opacity: 0.95;
+            visibility: visible;
+            pointer-events: auto;
+        }
 
-        /* 도트 5개 구성 */
-        .pagination { position: absolute; left: 40px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 18px; z-index: 100; }
-        .dot { width: 8px; height: 8px; background: rgba(0,0,0,0.15); border-radius: 50%; transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); cursor: pointer; }
-        .dot.active { background: #1a1a1a; transform: scale(2); }
+        .sound-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 16px;
+        }
+        .sound-bar {
+            width: 1.5px;
+            height: 14px;
+            background-color: #111111;
+            border-radius: 1px;
+            transition: height 0.3s ease, opacity 0.3s ease;
+        }
+        .sound-btn.playing .sound-bar {
+            animation: soundEqualizer 1.2s infinite ease-in-out;
+        }
+        .sound-btn.playing .sound-bar:nth-child(1) { animation-delay: 0.0s; }
+        .sound-btn.playing .sound-bar:nth-child(2) { animation-delay: 0.25s; }
+        .sound-btn.playing .sound-bar:nth-child(3) { animation-delay: 0.5s; }
+        .sound-btn.playing .sound-bar:nth-child(4) { animation-delay: 0.15s; }
 
-        /* 커스텀 알림 모달 (브라우저 내장 alert 완벽 우회 및 iframe 가로막힘 우회) */
+        @keyframes soundEqualizer {
+            0%, 100% { height: 4px; }
+            50% { height: 16px; }
+        }
+
+        .pagination { 
+            position: absolute; 
+            left: 40px; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            display: flex; 
+            flex-direction: column; 
+            gap: 18px; 
+            z-index: 100; 
+        }
+        .dot { 
+            width: 8px; 
+            height: 8px; 
+            background: rgba(0,0,0,0.15); 
+            border-radius: 50%; 
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1); 
+            cursor: pointer; 
+        }
+        .dot.active { 
+            background: #1a1a1a; 
+            transform: scale(2); 
+        }
+
         #customAlert {
             position: fixed; 
             top: 0; 
             left: 0; 
             width: 100%; 
             height: 100%; 
-            background: rgba(0,0,0,0.6); 
+            background: rgba(0, 0, 0, 0.12); 
             display: flex; 
             justify-content: center; 
             align-items: center; 
@@ -363,122 +675,252 @@
             visibility: hidden; 
             transition: all 0.4s ease; 
             backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
         }
-        #customAlert.active {
+        #customAlert.active { opacity: 1; visibility: visible; }
+
+        .modal-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(240, 248, 255, 0.3) 100%);
+            padding: 36px 30px;
+            border-radius: 28px;
+            max-width: 350px;
+            width: 88%;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.65);
+            box-shadow: inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.9), 
+                        inset 0 -1px 1.5px 0 rgba(0, 0, 0, 0.04),
+                        0 20px 45px rgba(0, 20, 40, 0.1);
+            backdrop-filter: blur(25px) saturate(160%);
+            -webkit-backdrop-filter: blur(25px) saturate(160%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 45%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 100%);
+            pointer-events: none;
+            border-top-left-radius: 28px;
+            border-top-right-radius: 28px;
+        }
+
+        .modal-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 65%);
+            pointer-events: none;
+        }
+
+        #gestureGuideOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 500;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+            background: rgba(245, 243, 238, 0.92);
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        #gestureGuideOverlay.active {
             opacity: 1;
             visibility: visible;
         }
 
-        /* 제스처 가이드라인 플로팅 토스트 프리미엄 미니멀 스타일 (이모티콘 완벽 배제) */
-        #gestureToast {
-            position: fixed;
-            top: 40px;
-            left: 50%;
-            transform: translateX(-50%) translateY(-20px);
-            background: rgba(18, 18, 18, 0.94); /* 깊이감 있는 세련된 블랙 */
-            color: #ffffff;
-            padding: 12px 28px;
-            border-radius: 40px;
-            font-family: 'Avant Garde', Avantgarde, 'Century Gothic', CenturyGothic, 'Montserrat', sans-serif;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 0.18em; /* 우아한 자간 정렬 */
+        .light-stream-bg {
+            position: absolute;
+            width: 120%;
+            height: 120%;
+            background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.7) 0%, rgba(245, 240, 230, 0.3) 45%, transparent 70%);
+            animation: flowingLight 8s infinite ease-in-out alternate;
+            pointer-events: none;
+            will-change: transform, opacity;
+        }
+
+        @keyframes flowingLight {
+            0% { transform: translate(-3%, -3%) scale(1); opacity: 0.6; }
+            50% { transform: translate(3%, 3%) scale(1.06); opacity: 0.85; }
+            100% { transform: translate(-2%, 2%) scale(1.02); opacity: 0.65; }
+        }
+
+        .guide-card {
+            position: relative;
+            z-index: 10;
+            max-width: 530px;
+            width: 90%;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.95);
+            border-radius: 28px;
+            padding: 42px 32px 38px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            text-align: center;
+            pointer-events: auto;
+        }
+
+        .guide-title {
+            font-family: 'Avant Garde', Avantgarde, 'Century Gothic', CenturyGothic, sans-serif;
+            font-size: 20px;
+            font-weight: 500;
+            color: #111111;
+            letter-spacing: -0.01em;
+            margin-bottom: 8px;
+            line-height: 1.2;
+            text-transform: none;
+        }
+
+        .guide-subtitle {
+            font-family: 'Noto Sans KR', sans-serif;
+            font-size: 13px;
+            color: #666666;
+            margin-bottom: 28px;
+            font-weight: 300;
+            word-break: keep-all;
+        }
+
+        .gesture-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-bottom: 8px;
+        }
+
+        .gesture-item {
+            background: rgba(250, 249, 245, 0.75);
+            border: 1px solid rgba(17, 17, 17, 0.08);
+            border-radius: 18px;
+            padding: 22px 10px 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .gesture-icon {
+            width: 44px;
+            height: 34px;
             display: flex;
             align-items: center;
             justify-content: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.45s cubic-bezier(0.25, 1, 0.5, 1);
-            z-index: 9999;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(12px);
-            pointer-events: none;
-            text-transform: uppercase;
+            color: #111111;
+        }
+
+        .gesture-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .gesture-name {
+            font-family: 'Avant Garde', Avantgarde, 'Century Gothic', CenturyGothic, sans-serif;
+            font-size: 12.5px;
+            font-weight: 500;
+            color: #111111;
+            letter-spacing: -0.01em;
+        }
+
+        .gesture-desc {
+            font-family: 'Noto Sans KR', sans-serif;
+            font-size: 11px;
+            color: #666666;
+            line-height: 1.4;
+            word-break: keep-all;
+            font-weight: 300;
         }
 
         @media (max-width: 1024px) {
             .overlay-content { padding: 60px; }
-            .species-en { font-size: 44px; white-space: nowrap; }
-            .sound-btn { top: 60px; right: 60px; }
+            .sound-btn { top: 31px; right: 40px; }
+            .home-title-topleft { left: 35px; top: 31px; font-size: 20px; }
+            .nav-line-left { left: 30px; }
+            .nav-line-right { right: 30px; }
+            .back-line-btn { left: 28px; top: 31px; }
         }
 
         @media (max-width: 768px) {
-            body, html { overflow: hidden; }
-            .overlay-content { padding: 40px 24px; justify-content: flex-start; gap: 20px; }
-            .top-info { max-width: 100%; background: rgba(255, 255, 255, 0.85); padding: 24px; border-radius: 20px; backdrop-filter: blur(10px); border: 1px solid rgba(0, 0, 0, 0.05); box-shadow: 0 8px 24px rgba(0,0,0,0.05); }
-            .species-en { font-size: 26px; margin-bottom: 6px; white-space: nowrap; } /* 모바일 가로 가독성을 위해 폰트 크기 최적화 */
-            .species-ko { font-size: 18px; margin-bottom: 20px; }
-            .info-btn, .map-btn { width: 50px; height: 50px; font-size: 15px; }
-            .info-panel { left: 0; top: 65px; transform: translateY(10px) translateX(0); width: calc(100vw - 48px); max-width: 340px; padding: 20px; }
-            .info-wrapper:hover .info-panel, .info-wrapper.force-show .info-panel { transform: translateY(0) translateX(0); }
-            .pagination { left: auto; right: 20px; top: 35%; }
-            .sound-btn { position: absolute; top: 24px; right: 24px; width: 36px; height: 36px; }
-            .sound-btn svg { width: 20px; height: 20px; }
-            
-            /* 모바일 화면에서의 플로팅 카드 레이아웃 배치 */
-            #canvas3d-container {
-                position: absolute !important;
-                top: auto !important;
-                bottom: 100px !important;
-                left: 50% !important;
-                width: calc(100% - 40px) !important;
-                max-width: 380px !important;
-                height: 320px !important;
-                transform: translateX(-50%) translateY(15px) !important;
-                border-radius: 20px !important;
-            }
-            #canvas3d-container.active {
-                transform: translateX(-50%) translateY(0) !important;
-            }
-            .close-map-btn { top: 15px; right: 15px; width: 32px; height: 32px; font-size: 12px; }
-            
-            /* 모바일 기기에서의 독립형 꽃 레이아웃 */
-            .flower-container { position: absolute; top: auto; bottom: 0%; left: 50%; transform: translateX(-50%); width: 100%; height: 100%; }
-            .flipped-flower { transform: scaleX(-1) !important; bottom: 0%; top: auto; left: 50%; }
+            .home-title-topleft { left: 20px; top: 31px; font-size: 17px; }
+            .home-menu-container { top: 76%; width: 90%; }
+            .overlay-content { padding: 40px 24px; }
+            .sound-btn { position: fixed; top: 31px; right: 24px; }
+            .nav-line-left { left: 18px; }
+            .nav-line-right { right: 18px; }
+            .back-line-btn { left: 28px; top: 31px; }
+            .species-en { font-size: 28px; }
+            .species-ko { font-size: 13.5px; }
+            .info-btn, .map-btn { font-size: 15px; }
+            .btn-group { gap: 20px; }
         }
     </style>
 </head>
 <body>
 
-    <video class="input_video"></video>
-    <canvas class="output_canvas" id="gestureCanvas"></canvas>
+    <button id="soundBtn" class="sound-btn" aria-label="Toggle Sound">
+        <div class="sound-bars">
+            <span class="sound-bar"></span>
+            <span class="sound-bar"></span>
+            <span class="sound-bar"></span>
+            <span class="sound-bar"></span>
+        </div>
+    </button>
 
-    <!-- 프리미엄 커스텀 모달 (차단 경고 우회용) -->
+    <div id="customCursor">
+        <div class="cursor-dot"></div>
+        <span class="cursor-text" id="cursorText"></span>
+    </div>
+
+    <video class="input_video" playsinline></video>
+
+    <!-- Camera Permission Alert Modal -->
     <div id="customAlert">
-        <div style="background: #ffffff; padding: 40px; border-radius: 24px; max-width: 450px; width: 90%; text-align: center; border: 1.5px solid #1a1a1a; box-shadow: 0 30px 60px rgba(0,0,0,0.25);">
-            <h3 style="font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 20px; margin-bottom: 16px; color: #1a1a1a;">Camera Access Needed</h3>
-            <p style="font-size: 15px; color: #555555; line-height: 1.7; margin-bottom: 28px; word-break: keep-all; font-weight: 300;">
-                이 디지털 아카이브의 <strong>제스처 개화 인터랙션</strong>을 감상하시려면 카메라 권한이 반드시 필요합니다.<br>
-                브라우저 주소창 좌측의 자물쇠 아이콘을 클릭하여 카메라 접근을 '허용'으로 변경한 후 다시 시도해 주세요.
+        <div class="modal-card">
+            <h3 style="font-family: 'Avant Garde', Avantgarde, 'Century Gothic', CenturyGothic, sans-serif; font-weight: 600; font-size: 15px; margin-bottom: 12px; color: #111111; letter-spacing: 0.06em; position: relative; z-index: 2;">CAMERA ACCESS</h3>
+            <p style="font-size: 13.5px; color: #333333; line-height: 1.65; margin-bottom: 24px; word-break: keep-all; font-weight: 400; position: relative; z-index: 2;">
+                이 디지털 아카이브의 개화 인터랙션을 위해선 카메라 권한이 필요합니다.
             </p>
-            <button id="closeAlertBtn" style="padding: 12px 42px; background: #1a1a1a; color: #ffffff; border: none; border-radius: 12px; font-family: 'Montserrat', sans-serif; font-weight: 500; font-size: 14px; cursor: pointer; transition: background 0.3s ease;">확인</button>
+            <div style="display: flex; gap: 10px; justify-content: center; position: relative; z-index: 2;">
+                <button id="denyAlertBtn" style="padding: 10px 20px; background: rgba(255, 255, 255, 0.45); color: #444444; border: 1px solid rgba(255, 255, 255, 0.75); border-radius: 12px; font-family: 'Avant Garde', Avantgarde, sans-serif; font-weight: 500; font-size: 12px; cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(10px);">건너뛰기</button>
+                <button id="closeAlertBtn" style="padding: 10px 22px; background: rgba(17, 17, 17, 0.9); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 12px; font-family: 'Avant Garde', Avantgarde, sans-serif; font-weight: 500; font-size: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.12);">카메라 허용</button>
+            </div>
         </div>
     </div>
 
-    <!-- 제스처 인식 피드백용 플로팅 가이드 토스트 (미니멀 단일 텍스트 구조) -->
-    <div id="gestureToast">
-        <span id="gestureToastText">PREVIOUS SPECIES</span>
-    </div>
-
+    <!-- Intro Pages -->
     <section id="pageA" class="page active">
         <div class="intro-text-group">
-            <p class="en-text">This website was created to preserve the beauty of Hawaii's five native hibiscus species.</p>
-            <p class="ko-text">이 웹사이트는 하와이의 고유종 히비스커스 5종의 아름다움을 보존하기 위해 만들어졌습니다.</p>
+            <p class="en-text">This website was created to archive rare endangered hibiscus species native to isolated islands around the world.</p>
+            <p class="ko-text">이 웹사이트는 전 세계 고립된 섬에 자생하는<br>희귀 멸종위기 히비스커스 종들을 기록하기 위해 만들어졌습니다.</p>
         </div>
     </section>
     
     <section id="pageB" class="page">
         <div class="intro-text-group">
-            <p class="en-text">It digitally archives their unique flowers and ecology.</p>
-            <p class="ko-text">다섯가지의 독특한 꽃과 생태를 디지털 아카이빙으로 보존합니다.</p>
+            <p class="en-text">It digitally records their ecosystems, island habitats, and unique botanical characteristics.</p>
+            <p class="ko-text">섬 생태계와 서식지, 그리고 꽃들의 독특한 생태적 특성을 디지털 아카이브로 보존합니다.</p>
         </div>
     </section>
     
     <section id="pageC" class="page">
         <div class="intro-text-group">
-            <p class="en-text">Explore the site to enjoy detailed information, photos, and stories.</p>
-            <p class="ko-text">사이트를 탐험하며 상세정보, 사진과 스토리를 즐겨보세요.</p>
+            <p class="en-text">Explore the archive to discover the beauty and ongoing stories of these endangered flowers.</p>
+            <p class="ko-text">아카이브를 탐험하며 사라져가는 꽃들의 아름다움과 생태를 확인해보세요.</p>
         </div>
     </section>
     
@@ -486,1398 +928,1627 @@
         <button id="exploreBtn" class="explore-btn">EXPLORE</button>
     </section>
 
-    <section id="pageE" class="page">
-        
-        <!-- 글로벌 3D 하와이 제도 캔버스 컨테이너 (설명 패널 상위 오버레이로 전환됨) -->
-        <div id="canvas3d-container">
-            <!-- 3D 뷰 ✕(닫기) 단추 추가 -->
-            <button id="closeMapBtn" class="close-map-btn" aria-label="Close Map">✕</button>
-        </div>
+    <!-- Home Page -->
+    <section id="pageHome" class="page">
+        <div id="home-caustic-container"></div>
 
-        <button id="soundBtn" class="sound-btn" aria-label="Toggle Sound">
-            <svg id="soundIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
-                <line x1="22" y1="9" x2="16" y2="15"></line>
-                <line x1="16" y1="9" x2="22" y2="15"></line>
+        <div class="home-title-topleft">Endangered hibiscus archive studio</div>
+
+        <!-- Left Navigation Line -->
+        <button id="navCircleLeft" class="nav-line-btn nav-line-left" aria-label="Previous Island">
+            <svg viewBox="0 0 20 20">
+                <line class="line-always" x1="10" y1="3.5" x2="10" y2="16.5" />
             </svg>
         </button>
 
-        <div class="pagination">
-            <div class="dot active"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
+        <!-- Right Navigation Line -->
+        <button id="navCircleRight" class="nav-line-btn nav-line-right" aria-label="Next Island">
+            <svg viewBox="0 0 20 20">
+                <line class="line-always" x1="10" y1="3.5" x2="10" y2="16.5" />
+            </svg>
+        </button>
+
+        <div class="home-menu-container">
+            <div id="startIslandSpeciesBtn" class="home-menu-item">
+                <div class="item-title-en">Hawaii</div>
+                <div class="item-title-ko">하와이의 멸종위기종</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Island Species Vertical Archive Page -->
+    <section id="pageE" class="page">
+        <!-- Flowing Light Gesture Guide Overlay -->
+        <div id="gestureGuideOverlay" class="active">
+            <div class="light-stream-bg"></div>
+            <div class="guide-card">
+                <h3 class="guide-title">Gesture Navigation Guide</h3>
+                <p class="guide-subtitle">새로운 제스처 인터랙션을 이용해 꽃을 개화시키고 아카이브를 탐험해보세요.</p>
+                
+                <div class="gesture-grid">
+                    <!-- 1. Open Palm Blooming -->
+                    <div class="gesture-item">
+                        <div class="gesture-icon">
+                            <svg viewBox="0 0 34 34" fill="none" stroke="#111111" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M7 19v-5.5a1.5 1.5 0 0 1 3 0V11a1.5 1.5 0 0 1 3 0V9a1.5 1.5 0 0 1 3 0v-2.5a1.5 1.5 0 0 1 3 0V17" />
+                                <path d="M19 13.5a1.5 1.5 0 0 1 3 0v4.5a7 7 0 0 1-7 7H13a6 6 0 0 1-6-6v-5.5" />
+                                <path d="M7 17.5c-1.8 0-2.8 1.2-2.8 2.8 0 2.2 1.8 3.7 3.8 3.7" />
+                                <line x1="17" y1="2" x2="17" y2="4" stroke-width="1.1" />
+                                <line x1="26" y1="5.5" x2="24.5" y2="7" stroke-width="1.1" />
+                                <line x1="8" y1="5.5" x2="9.5" y2="7" stroke-width="1.1" />
+                            </svg>
+                        </div>
+                        <div class="gesture-name">손바닥 펴기 / 주먹</div>
+                        <div class="gesture-desc">손을 펴면 개화, 주먹 쥐면 봉오리</div>
+                    </div>
+
+                    <!-- 2. Zone Pointing for Species Scrolling -->
+                    <div class="gesture-item">
+                        <div class="gesture-icon">
+                            <svg viewBox="0 0 34 34" fill="none" stroke="#111111" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="4" width="28" height="26" rx="5" stroke-dasharray="2 2" stroke-opacity="0.45" />
+                                <line x1="3" y1="11" x2="31" y2="11" stroke-opacity="0.3" />
+                                <line x1="3" y1="23" x2="31" y2="23" stroke-opacity="0.3" />
+                                <g transform="translate(4, 3)">
+                                    <path d="M12 4v11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-4" />
+                                    <path d="M12 8h2a1.8 1.8 0 0 1 1.8 1.8v1.2" />
+                                    <path d="M12 11h3.5a1.8 1.8 0 0 1 1.8 1.8v1.2" />
+                                    <path d="M6 13c-1.5 0-2 1-2 2.2a3 3 0 0 0 3 3h4a4 4 0 0 0 4-4v-1.5" />
+                                </g>
+                                <path d="M25 7l2-2 2 2" stroke-width="1.2" />
+                                <path d="M25 27l2 2 2-2" stroke-width="1.2" />
+                            </svg>
+                        </div>
+                        <div class="gesture-name">검지 영역 터치</div>
+                        <div class="gesture-desc">화면 상단/하단을 가리켜 품종 전환</div>
+                    </div>
+
+                    <!-- 3. V-Sign (Peace) for Info & Shaka for 3D Map -->
+                    <div class="gesture-item">
+                        <div class="gesture-icon">
+                            <svg viewBox="0 0 34 34" fill="none" stroke="#111111" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M11 6v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9a2 2 0 0 1 4 0" />
+                                <path d="M11 9l4-5a2 2 0 0 1 3.5 2l-2.5 5" />
+                                <path d="M16 11h2a2 2 0 0 1 2 2v2" />
+                                <path d="M16 15h2a2 2 0 0 1 2 2v2" />
+                                <path d="M7 16c0 3.5 3 6.5 7 6.5h2a6 6 0 0 0 6-6v-3" />
+                                <path d="M26 6a4 4 0 0 1 4 4v1m0 0l-2-2m2 2l2-2" stroke-width="1.1" />
+                            </svg>
+                        </div>
+                        <div class="gesture-name">브이 ✌️ / 샤카 🤙</div>
+                        <div class="gesture-desc">브이로 정보창, 샤카로 3D 지도 열기</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Camera Gesture Feedback Canvas (Hawaii Section Only) -->
+        <canvas class="output_canvas" id="gestureCanvas"></canvas>
+
+        <!-- Horizontal Line Back Button -->
+        <button id="btn-back-home-hawaii" class="back-line-btn" aria-label="Return to Home">
+            <svg viewBox="0 0 20 20">
+                <line class="line-always-horiz" x1="3.5" y1="10" x2="16.5" y2="10" />
+            </svg>
+        </button>
+
+        <div id="canvas3d-container">
+            <button id="closeMapBtn" class="close-map-btn" aria-label="Close Map">✕</button>
+        </div>
+
+        <div class="pagination" id="archivePagination">
+            <!-- Dynamically populated per island -->
         </div>
 
         <div class="archive-container" id="archiveContainer">
-            
-            <!-- 1. Hibiscus brackenridgei (yellow) -->
-            <div class="species-section" style="background-color: #ffffff;">
-                <div class="flower-container">
-                    <video class="flower-video" src="yellow.mp4" playsinline muted loop preload="auto"></video>
-                </div>
-                <div class="overlay-content">
-                    <div class="top-info">
-                        <h2 class="species-en">Hibiscus brackenridgei</h2>
-                        <p class="species-ko">마오 하우 헤레 (Maʻo hau hele)</p>
-                        
-                        <!-- 버튼들이 좌우 가로로 자연스럽게 배치되도록 구조 수정 -->
-                        <div class="btn-group">
-                            <div class="info-wrapper">
-                                <div class="info-btn">info</div>
-                                <div class="info-panel">
-                                    <div class="panel-title">Details</div>
-                                    <p class="panel-text">
-                                        <strong>자생지:</strong> 하와이 전역 건조림·관목지 (해발 120~800m)<br>
-                                        <strong>특징:</strong> 하와이 공식 주화(州花)로 지정된 선명한 노란색의 아름다운 꽃입니다. 야생 개체수가 극히 적어 전 세계적인 멸종위기종 보호법의 보살핌을 받고 있습니다.
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="map-btn" data-target-island="oahu">map</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 2. Hibiscus arnottianus (white) -->
-            <div class="species-section" style="background-color: #ffffff;">
-                <div class="flower-container">
-                    <video class="flower-video" src="white 1.mp4" playsinline muted loop preload="auto"></video>
-                </div>
-                <div class="overlay-content">
-                    <div class="top-info">
-                        <h2 class="species-en">Hibiscus arnottianus</h2>
-                        <p class="species-ko">코키오 케오케오 (Kokiʻo keʻokeʻo)</p>
-                        
-                        <div class="btn-group">
-                            <div class="info-wrapper">
-                                <div class="info-btn">info</div>
-                                <div class="info-panel">
-                                    <div class="panel-title">Details</div>
-                                    <p class="panel-text">
-                                        <strong>자생지:</strong> 오아후 및 몰로카이 섬의 다습한 산악 열대우림<br>
-                                        <strong>특징:</strong> 순백의 꽃잎 위로 대조를 이루며 뻗어 나온 붉은 수술대가 기막힌 시각적 대조를 연출합니다. 하와이 고유종 중 보기 드물게 매혹적인 향기를 머금고 있습니다.
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="map-btn" data-target-island="molokai">map</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 3. Hibiscus waimeae (flipped) -->
-            <div class="species-section" style="background-color: #ffffff;">
-                <div class="flower-container flipped-flower">
-                    <video class="flower-video" src="white 2.mp4" playsinline muted loop preload="auto"></video>
-                </div>
-                <div class="overlay-content">
-                    <div class="top-info">
-                        <h2 class="species-en">Hibiscus waimeae</h2>
-                        <p class="species-ko">와이메아 코키오 (Kauai Kokiʻo)</p>
-                        
-                        <div class="btn-group">
-                            <div class="info-wrapper">
-                                <div class="info-btn">info</div>
-                                <div class="info-panel">
-                                    <div class="panel-title">Details</div>
-                                    <p class="panel-text">
-                                        <strong>자생지:</strong> 카우아이 섬의 울창한 와이메아 캐년 일대<br>
-                                        <strong>특징:</strong> 해 질 녘이 되면 은은한 달콤한 잔향을 피워내는 독특한 백색 히비스커스입니다. 오직 카우아이 섬의 비바람 가득한 계곡 절벽에서만 자생합니다.
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="map-btn" data-target-island="kauai_north">map</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 4. Hibiscus clayi (red) -->
-            <div class="species-section" style="background-color: #ffffff;">
-                <div class="flower-container">
-                    <video class="flower-video" src="red.mp4" playsinline muted loop preload="auto"></video>
-                </div>
-                <div class="overlay-content">
-                    <div class="top-info">
-                        <h2 class="species-en">Hibiscus clayi</h2>
-                        <p class="species-ko">클레이 히비스커스</p>
-                        
-                        <div class="btn-group">
-                            <div class="info-wrapper">
-                                <div class="info-btn">info</div>
-                                <div class="info-panel">
-                                    <div class="panel-title">Details</div>
-                                    <p class="panel-text">
-                                        <strong>자생지:</strong> 카우아이 섬의 Nounou 산맥 건조 삼림<br>
-                                        <strong>특징:</strong> 꽃잎이 뒤쪽으로 강하게 휘어져 우아한 선을 그리는 선명한 다크 레드의 꽃입니다. 생태 파괴 및 외래종 유입으로 자생지 파괴를 겪고 있는 소중한 희귀종입니다.
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="map-btn" data-target-island="kauai_south">map</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 5. Hibiscus kokio (orange) -->
-            <div class="species-section" style="background-color: #ffffff;">
-                <div class="flower-container">
-                    <video class="flower-video" src="orange.mp4" playsinline muted loop preload="auto"></video>
-                </div>
-                <div class="overlay-content">
-                    <div class="top-info">
-                        <h2 class="species-en">Hibiscus kokio</h2>
-                        <p class="species-ko">코키오 울라 (Kokiʻo ʻula)</p>
-                        
-                        <div class="btn-group">
-                            <div class="info-wrapper">
-                                <div class="info-btn">info</div>
-                                <div class="info-panel">
-                                    <div class="panel-title">Details</div>
-                                    <p class="panel-text">
-                                        <strong>자생지:</strong> 하와이 여러 주요 제섬의 건조 및 다습 지역<br>
-                                        <strong>특징:</strong> 주황색부터 어두운 붉은색에 이르는 스펙트럼의 독특한 꽃을 피웁니다. 하와이 토착 조류들에게 아주 달콤하고 풍부한 꿀 공급원 역할을 담당합니다.
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="map-btn" data-target-island="maui">map</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+            <!-- Dynamically rendered per island -->
         </div>
     </section>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // 주요 엘리먼트 셀렉션
+            document.body?.classList.add('custom-cursor-active');
+
+            const customCursor = document.getElementById('customCursor');
+            const cursorText = document.getElementById('cursorText');
+            let mouseX = window.innerWidth / 2;
+            let mouseY = window.innerHeight / 2;
+            let cursorX = mouseX;
+            let cursorY = mouseY;
+
+            window.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            });
+
+            function renderCursor() {
+                cursorX += (mouseX - cursorX) * 0.25;
+                cursorY += (mouseY - cursorY) * 0.25;
+                if (customCursor) {
+                    customCursor.style.transform = `translate3d(${cursorX - 2}px, ${cursorY - 2}px, 0)`;
+                }
+                requestAnimationFrame(renderCursor);
+            }
+            renderCursor();
+
+            const homeMenuItem = document.querySelector('.home-menu-item');
+            if (homeMenuItem) {
+                homeMenuItem.addEventListener('mouseenter', () => {
+                    if (cursorText) cursorText.innerText = 'DISCOVER';
+                    customCursor?.classList.add('hover-discover');
+                });
+                homeMenuItem.addEventListener('mouseleave', () => {
+                    customCursor?.classList.remove('hover-discover');
+                    if (cursorText) cursorText.innerText = '';
+                });
+            }
+
+            // Global 3D Seabed scene states
+            let isHomeSceneActive = true;
+            let homeSeabedInitialized = false;
+            let homeScene, homeCamera, homeRenderer, causticMaterial, topCausticMaterial;
+            let animFrameId = null;
+            let startTime = performance.now();
+
+            function animateHomeScene() {
+                if (!isHomeSceneActive) return;
+                if (animFrameId) cancelAnimationFrame(animFrameId);
+                animFrameId = requestAnimationFrame(animateHomeScene);
+                const elapsedTime = (performance.now() - startTime) * 0.001;
+                if (causticMaterial && causticMaterial.uniforms && causticMaterial.uniforms.uTime) {
+                    causticMaterial.uniforms.uTime.value = elapsedTime;
+                }
+                if (topCausticMaterial && topCausticMaterial.uniforms && topCausticMaterial.uniforms.uTime) {
+                    topCausticMaterial.uniforms.uTime.value = elapsedTime;
+                }
+                if (homeRenderer && homeScene && homeCamera) {
+                    homeRenderer.render(homeScene, homeCamera);
+                }
+            }
+
+            const btnBackHomeHawaii = document.getElementById('btn-back-home-hawaii');
+            if (btnBackHomeHawaii) {
+                btnBackHomeHawaii.addEventListener('mouseenter', () => {
+                    if (cursorText) cursorText.innerText = 'Back';
+                    customCursor?.classList.add('hover-discover');
+                });
+                btnBackHomeHawaii.addEventListener('mouseleave', () => {
+                    customCursor?.classList.remove('hover-discover');
+                    if (cursorText) cursorText.innerText = '';
+                });
+            }
+
+            // Comprehensive botanical archive dataset per island
+            const islandsData = [
+                { id: "hawaii", en: "Hawaii", ko: "하와이의 멸종위기종" },
+                { id: "mascarene", en: "Mascarene Islands", ko: "마스카렌 제도의 멸종위기종" },
+                { id: "phillip", en: "Phillip Island", ko: "필립 섬의 멸종위기종" },
+                { id: "fiji", en: "Fiji Islands", ko: "피지 제도의 멸종위기종" }
+            ];
+
+            const archiveSpeciesData = {
+                hawaii: [
+                    {
+                        en: "Hibiscus brackenridgei",
+                        ko: "마오 하우 헤레 (Maʻo hau hele)",
+                        habitat: "하와이 전역 건조림·관목지 (해발 120~800m)",
+                        feature: "하와이 공식 주화(州花)로 지정된 선명한 황금빛의 아름다운 꽃입니다. 야생 개체수가 극히 적어 전 세계적인 멸종위기종 보호를 받고 있습니다.",
+                        islandKey: "oahu",
+                        video: "yellow.mp4",
+                        fallbackColor: "#EAB308",
+                        fallbackCenter: "#CA8A04",
+                        flipped: false
+                    },
+                    {
+                        en: "Hibiscus arnottianus",
+                        ko: "코키오 케오케오 (Kokiʻo keʻokeʻo)",
+                        habitat: "오아후 및 몰로카이 섬의 다습한 산악 열대우림",
+                        feature: "순백의 꽃잎 위로 대조를 이루며 뻗어 나온 붉은 수술대가 기막힌 시각적 대조를 연출합니다. 하와이 고유종 중 보기 드물게 매혹적인 향기를 머금고 있습니다.",
+                        islandKey: "molokai",
+                        video: "white 1.mp4",
+                        fallbackColor: "#F9FAFB",
+                        fallbackCenter: "#EF4444",
+                        flipped: false
+                    },
+                    {
+                        en: "Hibiscus waimeae",
+                        ko: "와이메아 코키오 (Kauai Kokiʻo)",
+                        habitat: "카우아이 섬의 울창한 와이메아 캐년 일대",
+                        feature: "해 질 녘이 되면 은은한 달콤한 잔향을 피워내는 독특한 백색 히비스커스입니다. 오직 카우아이 섬의 비바람 가득한 계곡 절벽에서만 자생합니다.",
+                        islandKey: "kauai_north",
+                        video: "white 2.mp4",
+                        fallbackColor: "#FFFFFF",
+                        fallbackCenter: "#DC2626",
+                        flipped: true
+                    },
+                    {
+                        en: "Hibiscus clayi",
+                        ko: "클레이 히비스커스",
+                        habitat: "카우아이 섬의 Nounou 산맥 건조 삼림",
+                        feature: "꽃잎이 뒤쪽으로 강하게 휘어져 우아한 선을 그리는 선명한 다크 레드의 꽃입니다. 생태 파괴 및 외래종 유입으로 자생지 파괴를 겪고 있는 소중한 희귀종입니다.",
+                        islandKey: "kauai_south",
+                        video: "red.mp4",
+                        fallbackColor: "#DC2626",
+                        fallbackCenter: "#991B1B",
+                        flipped: false
+                    },
+                    {
+                        en: "Hibiscus kokio",
+                        ko: "코키오 울라 (Kokiʻo ʻula)",
+                        habitat: "하와이 여러 주요 제섬의 건조 및 다습 지역",
+                        feature: "주황색부터 어두운 붉은색에 이르는 스펙트럼의 독특한 꽃을 피웁니다. 하와이 토착 조류들에게 아주 달콤하고 풍부한 꿀 공급원 역할을 담당합니다.",
+                        islandKey: "maui",
+                        video: "orange.mp4",
+                        fallbackColor: "#EA580C",
+                        fallbackCenter: "#C2410C",
+                        flipped: false
+                    }
+                ],
+                mascarene: [
+                    {
+                        en: "Hibiscus boryanus",
+                        ko: "푸주 드 부르봉 (Bois de fouge)",
+                        habitat: "마스카렌 제도(레위니옹 및 모리셔스) 아고산대 운무림",
+                        feature: "강렬한 진홍빛 꽃잎과 독특하게 돌출된 중심 기둥형 수술대를 지녔으며, 마스카렌 섬 특유의 험준한 화산 능선 절벽을 지키는 상징적인 고유종입니다.",
+                        islandKey: "mascarene_boryanus",
+                        video: "red.mp4",
+                        fallbackColor: "#B91C1C",
+                        fallbackCenter: "#7F1D1D",
+                        flipped: false
+                    },
+                    {
+                        en: "Hibiscus fragilis",
+                        ko: "만드라니크 (Mandrinette)",
+                        habitat: "모리셔스 섬 쾨르 드 가르드(Corps de Garde) 및 르 몽(Le Morne) 산록",
+                        feature: "야생에 성체 개체가 수십 그루 미만만 남아 있는 심각한 멸종위급종(CR)입니다. 섬세하고 우아한 선홍색 꽃잎이 보석처럼 피어납니다.",
+                        islandKey: "mascarene_fragilis",
+                        video: "orange.mp4",
+                        fallbackColor: "#E11D48",
+                        fallbackCenter: "#9F1239",
+                        flipped: false
+                    },
+                    {
+                        en: "Hibiscus genevii",
+                        ko: "제네비 히비스커스 (Geneve's Hibiscus)",
+                        habitat: "모리셔스 블랙리버 협곡(Black River Gorges) 일대",
+                        feature: "한때 완전히 멸종된 것으로 여겨졌다가 기적적으로 재발견된 종으로, 부드러운 연분홍빛 꽃잎과 짙은 자줏빛 심장부가 특징적인 희귀종입니다.",
+                        islandKey: "mascarene_genevii",
+                        video: "white 1.mp4",
+                        fallbackColor: "#F472B6",
+                        fallbackCenter: "#BE185D",
+                        flipped: true
+                    },
+                    {
+                        en: "Hibiscus liliiflorus",
+                        ko: "릴리플로루스 히비스커스 (Lily-flowered Hibiscus)",
+                        habitat: "로드리게스 섬(Rodrigues) 및 레위니옹 고유 열대 삼림",
+                        feature: "백합을 연상시키는 길쭉하고 우아한 나팔 모양 꽃잎을 지녔으며, 피어날 때 황금빛 주황색에서 시간이 지나며 오렌지-레드로 깊어지는 독특한 색변화를 보입니다.",
+                        islandKey: "mascarene_liliiflorus",
+                        video: "yellow.mp4",
+                        fallbackColor: "#F59E0B",
+                        fallbackCenter: "#B45309",
+                        flipped: false
+                    },
+                    {
+                        en: "Hibiscus columnaris",
+                        ko: "콜룸나리스 히비스커스",
+                        habitat: "마스카렌 제도 저지대 및 중산간 열대 상록수림",
+                        feature: "기둥 모양으로 우뚝 솟은 수술대와 대담한 황갈색-주황빛 꽃잎을 자랑하며, 고립된 섬 생태계의 수분 매개자 조류들과 오랜 공생 관계를 맺어왔습니다.",
+                        islandKey: "mascarene_columnaris",
+                        video: "orange.mp4",
+                        fallbackColor: "#EA580C",
+                        fallbackCenter: "#7C2D12",
+                        flipped: false
+                    }
+                ],
+                phillip: [
+                    {
+                        en: "Hibiscus insularis",
+                        ko: "필립 아일랜드 히비스커스",
+                        habitat: "호주령 남태평양 필립 섬(Phillip Island)의 단일 자생 계곡",
+                        feature: "세계에서 가장 희귀한 야생 식물 중 하나로, 야생에는 단 한 곳의 자생 군락만이 전해집니다. 우아한 연한 황록색-크림색 꽃잎으로 피어나 점차 자줏빛 와인색으로 성숙하는 신비로운 꽃입니다.",
+                        islandKey: "phillip_insularis",
+                        video: "yellow.mp4",
+                        fallbackColor: "#FEF08A",
+                        fallbackCenter: "#581C87",
+                        flipped: false
+                    }
+                ],
+                fiji: [
+                    {
+                        en: "Hibiscus bennettii",
+                        ko: "베네티 히비스커스",
+                        habitat: "피지 비티레부(Viti Levu) 섬의 울창한 다습 열대우림 하천변",
+                        feature: "피지의 깊은 계곡 운무림에서 자생하는 고유종으로, 맑고 투명한 분홍빛 꽃잎과 섬세한 꽃받침을 지닌 고유 식물입니다.",
+                        islandKey: "fiji_bennettii",
+                        video: "white 1.mp4",
+                        fallbackColor: "#FBCFE8",
+                        fallbackCenter: "#DB2777",
+                        flipped: false
+                    },
+                    {
+                        en: "Hibiscus bragliae",
+                        ko: "브라글리아이 히비스커스",
+                        habitat: "피지 타베우니(Taveuni) 화산섬 산악 고원 지대",
+                        feature: "‘정원의 섬’ 타베우니의 짙은 화산 토양에서 피어나는 화려한 선홍색 꽃으로, 피지 열대 고산 식물상의 독특한 진화 양상을 보여줍니다.",
+                        islandKey: "fiji_bragliae",
+                        video: "red.mp4",
+                        fallbackColor: "#EF4444",
+                        fallbackCenter: "#991B1B",
+                        flipped: true
+                    },
+                    {
+                        en: "Hibiscus macverryi",
+                        ko: "맥베리 히비스커스",
+                        habitat: "피지 바누아레부(Vanua Levu) 섬 남부 험준한 산악 능선",
+                        feature: "따뜻한 주황빛과 살구색 꽃잎이 조화를 이루는 희귀 야생종으로, 태평양 제도 생태계 파편화로 자생지가 철저히 보호받고 있습니다.",
+                        islandKey: "fiji_macverryi",
+                        video: "orange.mp4",
+                        fallbackColor: "#FB923C",
+                        fallbackCenter: "#C2410C",
+                        flipped: false
+                    },
+                    {
+                        en: "Hibiscus storckii",
+                        ko: "스토르키 히비스커스",
+                        habitat: "피지 오발라우(Ovalau) 및 비티레부 섬의 울창한 열대 삼림",
+                        feature: "19세기 식물학자 야코프 스토르크(Jacob Storck)가 발견한 피지의 역사적 고유종입니다. 우아한 연분홍빛 꽃잎을 피우며 오늘날 재배되는 수많은 히비스커스 품종의 귀중한 야생 선조로 평가받습니다.",
+                        islandKey: "fiji_storckii",
+                        video: "white 2.mp4",
+                        fallbackColor: "#FCE7F3",
+                        fallbackCenter: "#BE185D",
+                        flipped: false
+                    }
+                ]
+            };
+
+            let currentIslandIndex = 0;
+            let currentIslandId = "hawaii";
+            let currentSpeciesIdx = 0;
+            let totalSpecies = 5;
+            let isSpeciesScrolling = false;
+
+            const navLeftBtn = document.getElementById('navCircleLeft');
+            const navRightBtn = document.getElementById('navCircleRight');
+
+            function updateIslandDisplay() {
+                const itemEn = document.querySelector('.home-menu-item .item-title-en');
+                const itemKo = document.querySelector('.home-menu-item .item-title-ko');
+                const menuItem = document.querySelector('.home-menu-item');
+                if (!itemEn || !itemKo || !menuItem) return;
+
+                menuItem.style.opacity = '0';
+                menuItem.style.transform = 'translateY(4px)';
+
+                setTimeout(() => {
+                    const data = islandsData[currentIslandIndex];
+                    currentIslandId = data.id;
+                    if (itemEn) itemEn.innerText = data.en;
+                    if (itemKo) itemKo.innerText = data.ko;
+                    menuItem.style.opacity = '';
+                    menuItem.style.transform = '';
+                }, 200);
+            }
+
+            if (navLeftBtn) {
+                navLeftBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    currentIslandIndex = (currentIslandIndex - 1 + islandsData.length) % islandsData.length;
+                    updateIslandDisplay();
+                });
+            }
+
+            if (navRightBtn) {
+                navRightBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    currentIslandIndex = (currentIslandIndex + 1) % islandsData.length;
+                    updateIslandDisplay();
+                });
+            }
+
+            // Function to dynamically build archive slides and pagination for the selected island
+            function renderIslandArchive(islandId) {
+                const container = document.getElementById('archiveContainer');
+                const pagination = document.getElementById('archivePagination');
+                if (!container || !pagination) return;
+
+                const speciesList = archiveSpeciesData[islandId] || archiveSpeciesData.hawaii;
+                totalSpecies = speciesList.length;
+                currentSpeciesIdx = 0;
+
+                container.style.height = `${totalSpecies * 100}%`;
+
+                let slidesHtml = '';
+                speciesList.forEach((sp) => {
+                    const flippedClass = sp.flipped ? 'flipped-flower' : '';
+                    slidesHtml += `
+                        <div class="species-section" style="background-color: #ffffff; height: ${100 / totalSpecies}%;">
+                            <div class="flower-container ${flippedClass}">
+                                <video class="flower-video" src="${sp.video}" playsinline muted loop preload="auto" onerror="this.style.display='none'"></video>
+                                <svg class="flower-fallback-art" viewBox="0 0 200 200" fill="none" style="position: absolute; width: 320px; height: 320px; opacity: 0.85;">
+                                    <circle cx="100" cy="100" r="80" fill="${sp.fallbackColor}" opacity="0.2"/>
+                                    <path d="M100 20 Q120 70 170 80 Q130 110 140 170 Q100 130 60 170 Q70 110 30 80 Q80 70 100 20 Z" fill="${sp.fallbackColor}" opacity="0.85"/>
+                                    <circle cx="100" cy="100" r="15" fill="${sp.fallbackCenter}"/>
+                                </svg>
+                            </div>
+                            <div class="overlay-content">
+                                <div class="top-info">
+                                    <h2 class="species-en">${sp.en}</h2>
+                                    <p class="species-ko">${sp.ko}</p>
+                                    
+                                    <div class="btn-group">
+                                        <div class="info-wrapper">
+                                            <div class="info-btn">info</div>
+                                            <div class="info-panel">
+                                                <div class="panel-title">Details</div>
+                                                <p class="panel-text">
+                                                    <strong>자생지:</strong> ${sp.habitat}<br>
+                                                    <strong>특징:</strong> ${sp.feature}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div class="map-btn" data-target-island="${sp.islandKey}">map</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = slidesHtml;
+
+                let paginationHtml = '';
+                for (let i = 0; i < totalSpecies; i++) {
+                    paginationHtml += `<div class="dot ${i === 0 ? 'active' : ''}" data-idx="${i}"></div>`;
+                }
+                pagination.innerHTML = paginationHtml;
+
+                container.querySelectorAll('.map-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        openMapForCurrentSpecies();
+                    });
+                });
+
+                pagination.querySelectorAll('.dot').forEach((dot, idx) => {
+                    dot.addEventListener('click', () => {
+                        goToSpecies(idx);
+                    });
+                });
+
+                container.style.transform = 'translateY(0%)';
+            }
+
             const intros = [
                 document.getElementById('pageA'), 
                 document.getElementById('pageB'), 
                 document.getElementById('pageC'), 
                 document.getElementById('pageD')
             ];
+            const pageHome = document.getElementById('pageHome');
             const pageE = document.getElementById('pageE');
             const exploreBtn = document.getElementById('exploreBtn');
-            const archiveContainer = document.getElementById('archiveContainer');
-            const dots = document.querySelectorAll('.dot');
-            const sections = document.querySelectorAll('.species-section');
-            const infoWrappers = document.querySelectorAll('.info-wrapper');
+            const startIslandSpeciesBtn = document.getElementById('startIslandSpeciesBtn');
             const soundBtn = document.getElementById('soundBtn');
 
-            // 3D 연동 관련 선택자
-            const canvas3dContainer = document.getElementById('canvas3d-container');
-            const closeMapBtn = document.getElementById('closeMapBtn');
-            const mapBtns = document.querySelectorAll('.map-btn');
-
-            // 커스텀 알림 모달 제어자
             const customAlert = document.getElementById('customAlert');
             const closeAlertBtn = document.getElementById('closeAlertBtn');
-
-            // 미디어파이프 분석 인터페이스 선택자
-            const videoElement = document.querySelector('.input_video');
-            const canvasElement = document.getElementById('gestureCanvas');
-            const canvasCtx = canvasElement.getContext('2d');
+            const denyAlertBtn = document.getElementById('denyAlertBtn');
 
             let currentIntroIdx = 0;
-            let currentArchiveIdx = 0;
-            let isScrolling = false;
-            let cameraStarted = false;
-            let is3DActive = false; // 현재 3D 지도 모드 상태 플래그
-            let isPanning = false; // 시점 패닝 운동 활성화 플래그
-            let flowerSprites = {}; // 3D 꽃 마커 스프라이트 관리 객체 생성
-            let mapTimeout = null; // 줌아웃 전환용 글로벌 타이머 추가
-            let mapAnimState = 'idle'; // 맵 애니메이션 상태 플래그 ('idle', 'zoomed-in', 'zoomed-out', 'user-control')
-            
-            // 실시간 비디오 프레임 보간 제어 상태값
-            let targetProgress = 1.0;  // 0.0 (오므라듦) ~ 1.0 (대만개), 기본 상태는 만개(1.0)
-            let currentProgress = 1.0; // 부드러운 LERP 보간용 진행값
+            let introTimer = null;
 
-            // 연속 프레임 감지 디바운싱(Hysteresis) 필터 변수 설계
-            let lastExtendedGesture = 'none'; // 마지막으로 확정된 제스처 상태 추적 ('none', 'one', 'two', 'shaka-play', 'shaka-mute')
-            let gestureOneCount = 0;
-            let gestureTwoCount = 0;
-            let gestureShakaPlayCount = 0; // 샤카 재생 제스처 프레임 누적 카운터
-            let gestureShakaMuteCount = 0; // 샤카 음소거 제스처 프레임 누적 카운터
-            let gestureFistCount = 0;
-            const DEBOUNCE_FRAMES = 4; // 최소 4프레임(약 120ms) 동안 모양이 유지되어야 제스처 확정
+            function goToNextIntroSlide() {
+                if (currentIntroIdx < 3) {
+                    intros[currentIntroIdx]?.classList.remove('active');
+                    currentIntroIdx++;
+                    setTimeout(() => {
+                        intros[currentIntroIdx]?.classList.add('active');
+                    }, 100);
+                    if (currentIntroIdx < 3) {
+                        introTimer = setTimeout(goToNextIntroSlide, 5000);
+                    }
+                }
+            }
 
-            // 실시간 앰비언트 사운드 신시사이저 및 BGM 오디오 변수
-            let audioCtx = null;
-            let noiseNode = null;
-            let filterNode = null;
-            let gainNode = null;
-            let isMuted = true;
-            
-            // 노래 BGM 로드 및 무한 루프 설정
-            const bgmAudio = new Audio('bgm.mp3');
-            bgmAudio.loop = true;
-            bgmAudio.volume = 0.7; // BGM 볼륨 기본 70% 설정
+            introTimer = setTimeout(goToNextIntroSlide, 5000);
 
-            // 카메라 타겟 보정값을 위한 실시간 LERP 보간 타겟 데이터
-            let targetCameraPos = new THREE.Vector3(0, 7.8, 11.2);
-            let targetLookAtPos = new THREE.Vector3(0, 0, 0);
+            intros.forEach((introPage, idx) => {
+                if (idx < 3 && introPage) {
+                    introPage.addEventListener('click', () => {
+                        if (introTimer) clearTimeout(introTimer);
+                        goToNextIntroSlide();
+                    });
+                }
+            });
 
-            // 제스처 스크롤 쿨다운 및 안내 관리 상태값 추가
-            let lastGestureTime = 0;
-            const GESTURE_COOLDOWN = 1800; // 1.8초 동안 재스크롤 차단 (안정성 확보)
+            if (exploreBtn) {
+                exploreBtn.addEventListener('click', () => {
+                    if (introTimer) clearTimeout(introTimer);
+                    intros[3]?.classList.remove('active');
+                    setTimeout(() => {
+                        pageHome?.classList.add('active');
+                        soundBtn?.classList.add('visible');
+                        resizeHomeSeabedScene();
+                    }, 300);
+                });
+            }
 
-            // 각 개별 꽃에 매핑된 하와이 지리 좌표 구성 (3D 지도 포커싱 전용 데이터셋)
+            function executePageTransitionToE() {
+                pageHome?.classList.add('transition-out');
+                
+                setTimeout(() => {
+                    pageHome?.classList.remove('active', 'transition-out');
+                    pageE?.classList.add('transition-in-prep');
+                    pageE?.classList.add('active');
+                    isHomeSceneActive = false;
+                    
+                    renderIslandArchive(currentIslandId);
+
+                    if (cameraStarted) {
+                        const gestureCanvas = document.getElementById('gestureCanvas');
+                        gestureCanvas?.classList.add('active');
+                    }
+
+                    setTimeout(() => {
+                        pageE?.classList.remove('transition-in-prep');
+                        goToSpecies(0);
+                    }, 50);
+                }, 750);
+            }
+
             const islandCoordinates = {
                 default: { cam: { x: 0, y: 7.8, z: 11.2 }, look: { x: 0, y: 0, z: 0 } },
                 oahu: { cam: { x: -1.6, y: 3.5, z: 2.2 }, look: { x: -1.6, y: 0.8, z: -0.75 } },
                 molokai: { cam: { x: -0.4, y: 3.2, z: 2.8 }, look: { x: -0.4, y: 0.7, z: -0.2 } },
                 kauai_north: { cam: { x: -3.2, y: 3.3, z: 1.0 }, look: { x: -3.2, y: 0.65, z: -1.9 } },
                 kauai_south: { cam: { x: -2.4, y: 3.3, z: 1.6 }, look: { x: -2.4, y: 0.65, z: -1.3 } },
-                maui: { cam: { x: 0.8, y: 3.5, z: 3.42 }, look: { x: 0.8, y: 0.9, z: 0.42 } }
+                maui: { cam: { x: 0.8, y: 3.5, z: 3.42 }, look: { x: 0.8, y: 0.9, z: 0.42 } },
+                mascarene_boryanus: { cam: { x: 0.5, y: 3.4, z: 2.6 }, look: { x: 0.5, y: 0.7, z: -0.1 } },
+                mascarene_fragilis: { cam: { x: -0.8, y: 3.2, z: 2.3 }, look: { x: -0.8, y: 0.7, z: -0.4 } },
+                mascarene_genevii: { cam: { x: -0.3, y: 3.2, z: 2.4 }, look: { x: -0.3, y: 0.7, z: -0.3 } },
+                mascarene_liliiflorus: { cam: { x: 1.8, y: 3.5, z: 3.0 }, look: { x: 1.8, y: 0.8, z: 0.2 } },
+                mascarene_columnaris: { cam: { x: 0.2, y: 3.3, z: 2.5 }, look: { x: 0.2, y: 0.7, z: -0.2 } },
+                phillip_insularis: { cam: { x: 0.0, y: 3.0, z: 2.5 }, look: { x: 0.0, y: 0.6, z: 0.0 } },
+                fiji_bennettii: { cam: { x: -1.2, y: 3.4, z: 2.4 }, look: { x: -1.2, y: 0.7, z: -0.5 } },
+                fiji_bragliae: { cam: { x: 1.0, y: 3.4, z: 2.6 }, look: { x: 1.0, y: 0.7, z: 0.1 } },
+                fiji_macverryi: { cam: { x: 0.4, y: 3.3, z: 2.5 }, look: { x: 0.4, y: 0.7, z: -0.1 } },
+                fiji_storckii: { cam: { x: -0.6, y: 3.3, z: 2.4 }, look: { x: -0.6, y: 0.7, z: -0.3 } }
             };
 
-            // 볼륨 조절 아이콘 리소스 (라인아트형 SVG 템플릿)
-            const muteIcon = `
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
-                    <line x1="22" y1="9" x2="16" y2="15"></line>
-                    <line x1="16" y1="9" x2="22" y2="15"></line>
-                </svg>`;
-            const playIcon = `
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
-                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-                </svg>`;
+            let is3DActive = false;
+            let isPanning = false;
+            let mapAnimState = 'idle';
+            let mapTimeout = null;
+            let flowerSprites = {};
+            let targetCameraPos = new THREE.Vector3(0, 7.8, 11.2);
+            let targetLookAtPos = new THREE.Vector3(0, 0, 0);
 
-            // BGM 재생 함수
-            function playBGM() {
-                if (!audioCtx) {
-                    initHawaiiAudio();
-                }
-                if (audioCtx && audioCtx.state === 'suspended') {
-                    audioCtx.resume();
-                }
-                isMuted = false;
-                if (gainNode) {
-                    gainNode.gain.setTargetAtTime(0.08, audioCtx.currentTime, 0.4);
-                }
-                bgmAudio.play().catch(err => console.log("BGM 자동 재생 허용 우회 완료:", err));
-                soundBtn.innerHTML = playIcon;
-            }
-
-            // BGM 음소거 함수
-            function muteBGM() {
-                isMuted = true;
-                if (gainNode) {
-                    gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.4);
-                }
-                bgmAudio.pause();
-                soundBtn.innerHTML = muteIcon;
-            }
-
-            // 1. 인트로 페이지 타이머 기반 슬라이딩 전환 로직
-            function nextIntro() {
-                if (currentIntroIdx < 3) {
-                    intros[currentIntroIdx].classList.remove('active');
-                    currentIntroIdx++;
-                    setTimeout(() => {
-                        intros[currentIntroIdx].classList.add('active');
-                    }, 100);
-                    if (currentIntroIdx < 3) {
-                        setTimeout(nextIntro, 5000);
-                    }
-                }
-            }
-            // 최초 인트로 전환 예약 실행
-            setTimeout(nextIntro, 5000);
-
-            // 2. EXPLORE 버튼 클릭 시 카메라 권한 획득 처리 및 아카이브 진입
-            exploreBtn.addEventListener('click', async () => {
-                try {
-                    // EXPLORE를 누르는 순간 무조건 카메라 미디어 획득 수행
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    // 검사용 임시 스트림은 트랙 정지하여 자원 낭비 최소화
-                    stream.getTracks().forEach(track => track.stop());
-
-                    // 정상 허용 시 탐험 인터페이스 이동 및 트래킹 가동
-                    intros[3].classList.remove('active');
-                    setTimeout(() => { 
-                        pageE.classList.add('active'); 
-                        initHandsTracking(); 
-                        initThreeDScene(); 
-                        initVideoScrubbingLoop(); // 비디오 진행 프레임 보간 루프 작동
-                    }, 800);
-                } catch (err) {
-                    console.warn("카메라 접근 권한이 거부되었거나 장치가 존재하지 않습니다:", err);
-                    // 세련된 모달 공지 띄우기
-                    customAlert.classList.add('active');
-                    
-                    // 권한 획득에 실패하더라도 탐험 자체는 가능하게 설계 (마우스 스크롤 폴백 전제 하에 진입 허용)
-                    closeAlertBtn.onclick = () => {
-                        customAlert.classList.remove('active');
-                        intros[3].classList.remove('active');
-                        setTimeout(() => { 
-                            pageE.classList.add('active'); 
-                            initThreeDScene(); 
-                            initVideoScrubbingLoop(); // 비디오 루프 기둥 작동
-                        }, 800);
-                    };
-                }
-            });
-
-            // 3. 아카이브 스크롤(Y축 트랜지션) 전환 제어
-            function scrollArchive(index) {
-                if (isScrolling || is3DActive) return; 
-                isScrolling = true; 
-                currentArchiveIdx = index;
-                
-                // 5개 세션 분할 배치 Y 변환 비율 계산 (Y축 이동 20% 단위)
-                archiveContainer.style.transform = `translateY(-${currentArchiveIdx * 20}%)`;
-                
-                // 페이지 도트 갱신
-                dots.forEach((d, i) => d.classList.toggle('active', i === index));
-                
-                // 모달 닫기 초기화
-                infoWrappers.forEach(w => w.classList.remove('force-show'));
-
-                // 3D 오버레이 캔버스 강제 리셋
-                canvas3dContainer.classList.remove('active');
-                document.body.classList.remove('map-active');
-                
-                // 품종 전환 시 비디오 상태값 강제 원복 (일시적인 오조작 방지)
-                targetProgress = 1.0;
-                currentProgress = 1.0;
-
-                setTimeout(() => {
-                    isScrolling = false;
-                }, 1300);
-            }
-
-            // 제스처 스크롤 트리거 및 시각적 안내 토스트 연출 함수
-            function triggerGestureScroll(direction) {
-                if (!pageE.classList.contains('active') || isScrolling || is3DActive) return;
-
-                if (direction === 'up') {
-                    if (currentArchiveIdx > 0) {
-                        showGestureToast('▲ UP', '이전 품종으로 이동합니다');
-                        scrollArchive(currentArchiveIdx - 1);
-                    } else {
-                        showGestureToast('info', '첫 번째 품종입니다');
-                    }
-                } else if (direction === 'down') {
-                    if (currentArchiveIdx < 4) {
-                        showGestureToast('▼ DOWN', '다음 품종으로 이동합니다');
-                        scrollArchive(currentArchiveIdx + 1);
-                    } else {
-                        showGestureToast('info', '마지막 품종입니다');
-                    }
-                }
-            }
-
-            // 가이드 토스트 팝업 제어 (미니멀 컨셉 - 이모티콘 완벽 제거)
-            let toastTimer = null;
-            function showGestureToast(type, message) {
-                const toast = document.getElementById('gestureToast');
-                const toastText = document.getElementById('gestureToastText');
-                
-                if (toastTimer) clearTimeout(toastTimer);
-
-                if (type === '▲ UP') {
-                    toastText.innerHTML = 'PREVIOUS SPECIES';
-                } else if (type === '▼ DOWN') {
-                    toastText.innerHTML = 'NEXT SPECIES';
-                } else {
-                    toastText.innerHTML = message;
-                }
-                
-                toast.style.opacity = '1';
-                toast.style.visibility = 'visible';
-                toast.style.transform = 'translateX(-50%) translateY(0)';
-                
-                toastTimer = setTimeout(() => {
-                    toast.style.opacity = '0';
-                    toast.style.visibility = 'hidden';
-                    toast.style.transform = 'translateX(-50%) translateY(-20px)';
-                }, 1400);
-            }
-
-            // Three.js 카메라와 OrbitControls 타겟 변동 보간 설정
             function set3DCameraTarget(targetKey) {
                 const data = islandCoordinates[targetKey] || islandCoordinates.default;
                 targetCameraPos.set(data.cam.x, data.cam.y, data.cam.z);
                 targetLookAtPos.set(data.look.x, data.look.y, data.look.z);
-
-                // 3D 맵 탐험 모드 활성화 시 자생종 꽃 마커 1개만 하이라이트 토글
                 for (const key in flowerSprites) {
                     if (flowerSprites[key]) {
-                        if (is3DActive) {
-                            flowerSprites[key].visible = (key === targetKey);
-                        } else {
-                            flowerSprites[key].visible = true;
-                        }
+                        flowerSprites[key].visible = is3DActive ? (key === targetKey) : true;
                     }
                 }
             }
 
-            // 3D 하와이 지형 카드 오버레이 열기 함수 (초기 줌인 후 5초 뒤 자동 줌아웃 및 턴테이블 시작)
             function openMapForCurrentSpecies() {
-                if (is3DActive) return; 
-
-                const currentSection = sections[currentArchiveIdx];
-                if (!currentSection) return;
+                const canvas3dContainer = document.getElementById('canvas3d-container');
+                if (!canvas3dContainer) return;
                 
-                // [간섭방지] Map이 열리는 즉시 모든 열려있던 Info 모달을 내리고, Info 상호작용 바인딩 잠금
-                infoWrappers.forEach(w => w.classList.remove('force-show'));
-                document.body.classList.add('map-active');
+                initThreeDMapScene();
+
+                const sections = document.querySelectorAll('.species-section');
+                const currentSection = sections[currentSpeciesIdx];
+                if (!currentSection) return;
+
+                const currentInfo = currentSection.querySelector('.info-wrapper');
+                if (currentInfo) currentInfo.classList.remove('force-show');
 
                 const mapBtn = currentSection.querySelector('.map-btn');
                 if (!mapBtn) return;
 
                 const targetIsland = mapBtn.getAttribute('data-target-island');
                 is3DActive = true;
-                isPanning = true; 
-                mapAnimState = 'zoomed-in'; // 1단계: 줌인 상태 돌입
-                closeMapBtn.style.display = 'flex'; 
+                isPanning = true;
+                mapAnimState = 'zoomed-in';
 
-                // 3D 하와이 지형 카드 오버레이 수직 하단 안착 연산
+                const pageE = document.getElementById('pageE');
                 const btnRect = mapBtn.getBoundingClientRect();
-                const parentRect = pageE.getBoundingClientRect();
-                const topPos = btnRect.bottom - parentRect.top + 15; 
+                const parentRect = pageE ? pageE.getBoundingClientRect() : { top: 0, left: 0 };
+                const topPos = btnRect.bottom - parentRect.top + 14;
                 const leftPos = btnRect.left - parentRect.left;
 
                 canvas3dContainer.style.top = `${topPos}px`;
                 canvas3dContainer.style.left = `${leftPos}px`;
-
                 canvas3dContainer.classList.add('active');
+
                 set3DCameraTarget(targetIsland);
 
-                // 이전 대기 중인 예약 타이머 완전 소멸
                 if (mapTimeout) clearTimeout(mapTimeout);
-
-                // 5초 대기 후 자동으로 약간 줌아웃 한 다음 턴테이블 연출 시작
                 mapTimeout = setTimeout(() => {
-                    mapAnimState = 'zoomed-out'; // 2단계: 줌아웃 및 턴테이블 돌입
+                    mapAnimState = 'zoomed-out';
                     isPanning = true;
-
-                    // 해당 섬의 Look-At 기점을 기초로 삼아 카메라 거리의 1.5배 뒤로 멀어지는 줌아웃 위치 연산
                     const data = islandCoordinates[targetIsland] || islandCoordinates.default;
                     const look = new THREE.Vector3(data.look.x, data.look.y, data.look.z);
                     const cam = new THREE.Vector3(data.cam.x, data.cam.y, data.cam.z);
-                    
-                    const dir = new THREE.Vector3().subVectors(cam, look);
-                    dir.multiplyScalar(1.5); // 1.5배 줌아웃 거리 배율 적용
-                    
+                    const dir = new THREE.Vector3().subVectors(cam, look).multiplyScalar(1.5);
                     targetCameraPos.copy(look).add(dir);
                     targetLookAtPos.copy(look);
                 }, 5000);
-
-                setTimeout(() => {
-                    window.dispatchEvent(new Event('resize'));
-                }, 80);
             }
 
-            // 3D 하와이 지형 카드 오버레이 닫기 함수
             function closeMap() {
-                if (!is3DActive) return;
+                const canvas3dContainer = document.getElementById('canvas3d-container');
+                if (!canvas3dContainer) return;
                 is3DActive = false;
-                isPanning = false; 
+                isPanning = false;
                 mapAnimState = 'idle';
                 if (mapTimeout) {
                     clearTimeout(mapTimeout);
                     mapTimeout = null;
                 }
                 canvas3dContainer.classList.remove('active');
-                
-                // [간섭방지 해제] Map 오버레이가 완전히 닫힐 때 하드웨어 락을 원복
-                document.body.classList.remove('map-active');
-                
                 set3DCameraTarget('default');
             }
 
-            // map 단추 연동 이벤트 바인딩
-            mapBtns.forEach(btn => {
-                btn.addEventListener('click', (e) => {
+            const closeMapBtn = document.getElementById('closeMapBtn');
+            if (closeMapBtn) {
+                closeMapBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    openMapForCurrentSpecies();
+                    closeMap();
                 });
-            });
-
-            // 3D 오버레이 ✕(닫기) 단추 제어
-            closeMapBtn.addEventListener('click', () => {
-                closeMap();
-            });
-
-            // 마우스 휠 감지 식 슬라이더 이벤트 바인딩
-            window.addEventListener('wheel', (e) => {
-                if (!pageE.classList.contains('active') || isScrolling || is3DActive || Math.abs(e.deltaY) < 30) return;
-                if (e.deltaY > 0 && currentArchiveIdx < 4) {
-                    scrollArchive(currentArchiveIdx + 1);
-                } else if (e.deltaY < 0 && currentArchiveIdx > 0) {
-                    scrollArchive(currentArchiveIdx - 1);
-                }
-                e.preventDefault();
-            }, { passive: false });
-
-            // 키보드 방향키 바인딩
-            window.addEventListener('keydown', (e) => {
-                if (!pageE.classList.contains('active') || isScrolling || is3DActive) return;
-                if (e.key === 'ArrowDown' && currentArchiveIdx < 4) {
-                    scrollArchive(currentArchiveIdx + 1);
-                    e.preventDefault();
-                } else if (e.key === 'ArrowUp' && currentArchiveIdx > 0) {
-                    scrollArchive(currentArchiveIdx - 1);
-                    e.preventDefault();
-                }
-            });
-
-            // 모바일 터치 스와이프 바인딩
-            let touchStartY = 0;
-            let touchEndY = 0;
-            pageE.addEventListener('touchstart', (e) => {
-                if (is3DActive) return;
-                touchStartY = e.changedTouches[0].screenY;
-            }, { passive: true });
-
-            pageE.addEventListener('touchend', (e) => {
-                if (is3DActive) return;
-                touchEndY = e.changedTouches[0].screenY;
-                handleSwipe();
-            }, { passive: true });
-
-            function handleSwipe() {
-                if (isScrolling) return;
-                const swipeThreshold = 50; 
-                const deltaY = touchStartY - touchEndY;
-                
-                if (deltaY > swipeThreshold && currentArchiveIdx < 4) {
-                    scrollArchive(currentArchiveIdx + 1); 
-                } else if (deltaY < -swipeThreshold && currentArchiveIdx > 0) {
-                    scrollArchive(currentArchiveIdx - 1); 
-                }
             }
 
-            dots.forEach((dot, index) => {
-                dot.addEventListener('click', () => {
-                    if (index !== currentArchiveIdx && !is3DActive) {
-                        scrollArchive(index);
-                    }
-                });
-            });
-
-            // 4. Web Audio API를 활용한 가상 파도 합성기
-            function initHawaiiAudio() {
-                if (audioCtx) return;
-                
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                
-                const bufferSize = 2 * audioCtx.sampleRate;
-                const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-                const output = noiseBuffer.getChannelData(0);
-                
-                let b0, b1, b2, b3, b4, b5, b6;
-                b0 = b1 = b2 = b3 = b4 = b5 = b6 = 0.0;
-                
-                for (let i = 0; i < bufferSize; i++) {
-                    const white = Math.random() * 2 - 1;
-                    b0 = 0.99886 * b0 + white * 0.0555179;
-                    b1 = 0.99332 * b1 + white * 0.0750759;
-                    b2 = 0.96900 * b2 + white * 0.1538520;
-                    b3 = 0.86650 * b3 + white * 0.3104856;
-                    b4 = 0.55000 * b4 + white * 0.5329522;
-                    b5 = -0.7616 * b5 - white * 0.0168980;
-                    output[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
-                    output[i] *= 0.11; 
-                    b6 = white * 0.115926;
-                }
-                
-                noiseNode = audioCtx.createBufferSource();
-                noiseNode.buffer = noiseBuffer;
-                noiseNode.loop = true;
-                
-                filterNode = audioCtx.createBiquadFilter();
-                filterNode.type = 'lowpass';
-                filterNode.frequency.value = 350;
-                filterNode.Q.value = 1.2;
-                
-                gainNode = audioCtx.createGain();
-                gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-                
-                noiseNode.connect(filterNode);
-                filterNode.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                
-                noiseNode.start(0);
-                
-                function modulateOceanWaves() {
-                    if (!audioCtx) return;
-                    const now = audioCtx.currentTime;
-                    const cycle = 8; 
-                    const t = now % cycle;
-                    const sinVal = Math.sin((t / cycle) * Math.PI * 2); 
-                    
-                    const targetFreq = 250 + (sinVal + 1) * 175;
-                    filterNode.frequency.setTargetAtTime(targetFreq, now, 1.6);
-                    
-                    const targetGain = isMuted ? 0 : 0.04 + (sinVal + 1) * 0.04;
-                    gainNode.gain.setTargetAtTime(targetGain, now, 1.2);
-                    
-                    setTimeout(modulateOceanWaves, 150);
-                }
-                modulateOceanWaves();
-            }
-
-            // 사운드 아이콘 제어 연동
-            soundBtn.addEventListener('click', () => {
-                if (isMuted) {
-                    playBGM();
-                } else {
-                    muteBGM();
-                }
-            });
-
-            // 5. 비디오 스크러빙 진행률 보간 갱신 프레임 루프 (LERP 기반 하이엔드 동기화 및 끊김 방지 최적화)
-            function initVideoScrubbingLoop() {
-                // 비동기 비디오 탐색(seek) 처리 중 중복 명령 방지를 위한 전역 차단 락(Lock) 변수
-                let isSeeking = false;
-
-                function updateFrame() {
-                    requestAnimationFrame(updateFrame);
-                    
-                    if (!pageE.classList.contains('active')) return;
-
-                    const currentSection = sections[currentArchiveIdx];
-                    if (!currentSection) return;
-
-                    const activeVideo = currentSection.querySelector('.flower-video');
-                    if (!activeVideo) return;
-
-                    // 1단계 안전망: 비디오 메타데이터 및 최소 첫 프레임이 로드되지 않았다면 처리를 무조건 패스
-                    if (activeVideo.readyState < 2) return;
-
-                    // 2단계 안전망: 브라우저가 현재 seeking 상태이거나 스크립트 탐색 락이 걸려있다면 대기 (flicker 완벽 해결)
-                    if (activeVideo.seeking || isSeeking) return;
-
-                    // 목표 보간 계산 (반응 속도를 우아하게 추종하기 위한 보간 계수 0.08 적용)
-                    currentProgress += (targetProgress - currentProgress) * 0.08;
-
-                    // 미세 댐핑 수렴 처리
-                    if (Math.abs(targetProgress - currentProgress) < 0.001) {
-                        currentProgress = targetProgress;
-                    }
-
-                    // 활성 비디오 파일 재생 시간 강제 변조 (Scrubbing)
-                    if (activeVideo.duration && !isNaN(activeVideo.duration)) {
-                        // 3단계 안전망: 비디오 파일 재생 시간의 양 끝단 버그(검은 화면) 방지를 위해 0.01~0.99로 범위 차단
-                        const clampedProgress = Math.min(0.99, Math.max(0.01, currentProgress));
-                        const targetTime = clampedProgress * activeVideo.duration;
-                        
-                        // 4단계 안전망: 타겟 시간과 비디오 현재 재생 시간의 절대적 갭이 0.03초(대략 1프레임)를 넘을 때만 명령 전송
-                        if (Math.abs(activeVideo.currentTime - targetTime) > 0.03) {
-                            isSeeking = true;
-                            activeVideo.currentTime = targetTime;
-                        }
-                    }
-                }
-
-                // 모든 비디오 요소를 대상으로 'seeked'(탐색 완료) 시점에만 락을 유연하게 해제하는 글로벌 핸들러 등록
-                const allVideos = document.querySelectorAll('.flower-video');
-                allVideos.forEach(video => {
-                    video.addEventListener('seeked', () => {
-                        isSeeking = false;
-                    });
-                    
-                    // 최초 1회 비디오 강제 정지 처리하여 수동 제스처 제어와 디바운스 충돌 방지
-                    video.pause();
-                });
-
-                updateFrame();
-            }
-
-            // 6. MediaPipe Hands 제스처 결과 해석 루프 (오인식 해결 및 상호배제 디바운싱 적용)
-            function onResults(results) {
-                canvasCtx.save();
-                canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-                
-                // 실시간 웹캠 화면 그리기
-                canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-                
-                if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                    const connections = [
-                        [0, 1], [1, 2], [2, 3], [3, 4],       // 엄지
-                        [0, 5], [5, 6], [6, 7], [7, 8],       // 검지
-                        [5, 9], [9, 10], [10, 11], [11, 12],  // 중지
-                        [9, 13], [13, 14], [14, 15], [15, 16],// 약지
-                        [13, 17], [17, 18], [18, 19], [19, 20],// 새끼
-                        [0, 17]                               // 손바닥 베이스
-                    ];
-
-                    for (let i = 0; i < results.multiHandLandmarks.length; i++) {
-                        const landmarks = results.multiHandLandmarks[i];
-                        
-                        // 1. 관절 연결뼈 그리기 (순백색 발광 라인 성좌 테마)
-                        connections.forEach(([p1, p2]) => {
-                            const pt1 = landmarks[p1];
-                            const pt2 = landmarks[p2];
-                            if (pt1 && pt2) {
-                                canvasCtx.beginPath();
-                                canvasCtx.moveTo(pt1.x * canvasElement.width, pt1.y * canvasElement.height);
-                                canvasCtx.lineTo(pt2.x * canvasElement.width, pt2.y * canvasElement.height);
-                                canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
-                                canvasCtx.lineWidth = 3.5;
-                                canvasCtx.shadowColor = '#ffffff';
-                                canvasCtx.shadowBlur = 4;
-                                canvasCtx.stroke();
-                            }
-                        });
-
-                        // 2. 관절 마디 점 그리기
-                        landmarks.forEach(pt => {
-                            canvasCtx.beginPath();
-                            canvasCtx.arc(pt.x * canvasElement.width, pt.y * canvasElement.height, 4, 0, 2 * Math.PI);
-                            canvasCtx.fillStyle = '#ffffff'; 
-                            canvasCtx.shadowColor = '#ffffff';
-                            canvasCtx.shadowBlur = 5;
-                            canvasCtx.fill();
-                        });
-                        
-                        canvasCtx.shadowBlur = 0;
-
-                        // 관절 랜드마크 추출 및 오므림/벌림 거리 비례 연산
-                        const wrist = landmarks[0];
-                        const indexTip = landmarks[8];
-                        const middleTip = landmarks[12];
-                        const ringTip = landmarks[16];
-                        const pinkyTip = landmarks[20];
-                        const middleMCP = landmarks[9];
-                        
-                        const getDist = (p1, p2) => Math.hypot(p1.x - p2.x, p1.y - p2.y);
-                        const scale = getDist(wrist, middleMCP);
-                        
-                        const indexExt = getDist(indexTip, wrist) / scale;
-                        const middleExt = getDist(middleTip, wrist) / scale;
-                        const ringExt = getDist(ringTip, wrist) / scale;
-                        const pinkyExt = getDist(pinkyTip, wrist) / scale;
-                        
-                        // 4개 손가락의 손목 기준 확장도(벌림/오므림 강도) 평균치 계산
-                        const avgExt = (indexExt + middleExt + ringExt + pinkyExt) / 4;
-                        
-                        const thumbTip = landmarks[4];
-                        const thumbMCP = landmarks[2];
-                        const thumbLen = getDist(thumbTip, thumbMCP) / scale;
-                        
-                        // 네 손가락이 단단하게 주먹을 쥐었는가 판별 (fist 감지)
-                        const isFist = (avgExt < 1.30);
-                        
-                        // 검지만 하늘 높이 곧게 펼쳐진 숫자 '1' 제스처 판별
-                        const isNumberOne = (indexExt > 1.55) && (middleExt < 1.25) && (ringExt < 1.25) && (pinkyExt < 1.25);
-
-                        // 엄지가 접히고 검지와 중지가 함께 펼쳐진 숫자 '2' 제스처 판별
-                        const isNumberTwo = (thumbLen <= 0.65) && (indexExt > 1.55) && (middleExt > 1.55) && (ringExt < 1.25) && (pinkyExt < 1.25);
-
-                        // 샤카 사인 감지 정의
-                        const isShakaBase = (thumbLen > 0.55) && (pinkyExt > 1.35) && (indexExt < 1.35) && (middleExt < 1.35) && (ringExt < 1.35);
-                        
-                        // 화면 공간(거울 모드 반영)에서의 X 좌표 연산 (0 = 화면 왼쪽, 1 = 화면 오른쪽)
-                        const thumbScreenX = 1 - thumbTip.x;
-                        const pinkyScreenX = 1 - pinkyTip.x;
-                        
-                        // 사용자가 바라보는 화면 공간 기준:
-                        // 1. 정방향: 엄지가 왼쪽, 소지가 오른쪽 -> 노래 재생
-                        const isShakaPlay = isShakaBase && (thumbScreenX < pinkyScreenX);
-                        // 2. 반전: 엄지가 오른쪽, 소지가 왼쪽 -> 음소거
-                        const isShakaMute = isShakaBase && (thumbScreenX > pinkyScreenX);
-                        
-                        // 실시간 제스처 처리 대상 현재 섹션 바인딩
-                        const currentSection = sections[currentArchiveIdx];
-                        const currentInfoWrapper = currentSection ? currentSection.querySelector('.info-wrapper') : null;
-
-                        // 연속 감지 디바운싱(Debounce) 알고리즘 가동
-                        if (isShakaPlay) {
-                            gestureShakaPlayCount++;
-                            gestureShakaMuteCount = 0;
-                            gestureOneCount = 0;
-                            gestureTwoCount = 0;
-                            gestureFistCount = 0;
-                        } else if (isShakaMute) {
-                            gestureShakaMuteCount++;
-                            gestureShakaPlayCount = 0;
-                            gestureOneCount = 0;
-                            gestureTwoCount = 0;
-                            gestureFistCount = 0;
-                        } else if (isNumberTwo) {
-                            gestureTwoCount++;
-                            gestureOneCount = 0;
-                            gestureShakaPlayCount = 0;
-                            gestureShakaMuteCount = 0;
-                            gestureFistCount = 0;
-                        } else if (isNumberOne) {
-                            gestureOneCount++;
-                            gestureTwoCount = 0;
-                            gestureShakaPlayCount = 0;
-                            gestureShakaMuteCount = 0;
-                            gestureFistCount = 0;
-                        } else if (isFist) {
-                            gestureFistCount++;
-                            gestureOneCount = 0;
-                            gestureTwoCount = 0;
-                            gestureShakaPlayCount = 0;
-                            gestureShakaMuteCount = 0;
-                        } else {
-                            // 어설프게 펴고 접는 물리 과도기는 0으로 초기화하여 오동작 방지
-                            gestureOneCount = 0;
-                            gestureTwoCount = 0;
-                            gestureShakaPlayCount = 0;
-                            gestureShakaMuteCount = 0;
-                            gestureFistCount = 0;
-                        }
-
-                        // 디바운스 프레임 수치를 넘어 확정된 순간에만 인터랙션 이벤트 분기 실행
-                        if (gestureShakaPlayCount >= DEBOUNCE_FRAMES) {
-                            if (lastExtendedGesture !== 'shaka-play') {
-                                lastExtendedGesture = 'shaka-play';
-                                playBGM();
-                            }
-                            gestureShakaPlayCount = DEBOUNCE_FRAMES; // 카운터 오버플로우 방지
-                        } else if (gestureShakaMuteCount >= DEBOUNCE_FRAMES) {
-                            if (lastExtendedGesture !== 'shaka-mute') {
-                                lastExtendedGesture = 'shaka-mute';
-                                muteBGM(); // 주먹 쥐는 과정 거치지 않고 샤카 사인의 수직 각도 반전(Roll Over)으로 부드럽게 직결 음소거
-                            }
-                            gestureShakaMuteCount = DEBOUNCE_FRAMES;
-                        } else if (gestureOneCount >= DEBOUNCE_FRAMES) {
-                            if (lastExtendedGesture !== 'one') {
-                                lastExtendedGesture = 'one';
-                                // [오류방지 상호배제] 숫자 1 감지 시 info 카드 가동 전 3D MAP이 있다면 즉시 닫기
-                                if (is3DActive) {
-                                    closeMap();
-                                }
-                                if (currentInfoWrapper && !currentInfoWrapper.classList.contains('force-show')) {
-                                    currentInfoWrapper.classList.add('force-show');
-                                }
-                            }
-                            gestureOneCount = DEBOUNCE_FRAMES;
-                        } else if (gestureTwoCount >= DEBOUNCE_FRAMES) {
-                            if (lastExtendedGesture !== 'two') {
-                                lastExtendedGesture = 'two';
-                                // [오류방지 상호배제] 숫자 2 감지 시 3D MAP 활성화 전 info 카드가 열려있다면 즉시 닫기
-                                if (currentInfoWrapper && currentInfoWrapper.classList.contains('force-show')) {
-                                    currentInfoWrapper.classList.remove('force-show');
-                                }
-                                if (!is3DActive) {
-                                    openMapForCurrentSpecies();
-                                }
-                            }
-                            gestureTwoCount = DEBOUNCE_FRAMES;
-                        } else if (gestureFistCount >= DEBOUNCE_FRAMES) {
-                            // 주먹 접기가 정상 프레임만큼 완전히 지속되어 모션이 끝났을 때만 제어 가동
-                            if (currentInfoWrapper && currentInfoWrapper.classList.contains('force-show')) {
-                                currentInfoWrapper.classList.remove('force-show');
-                            }
-                            if (is3DActive) {
-                                closeMap();
-                            }
-
-                            // 제스처 임시 메모리 초기화
-                            lastExtendedGesture = 'none';
-                            gestureFistCount = DEBOUNCE_FRAMES;
-
-                            // 기존의 엄지(Thumbs) 제스처 페이지 전환 알고리즘 연계 구동
-                            const currentThumbLen = getDist(thumbTip, thumbMCP) / scale;
-                            if (currentThumbLen > 0.7) {
-                                const yDiff = thumbTip.y - thumbMCP.y;
-                                const now = Date.now();
-                                
-                                if (now - lastGestureTime > GESTURE_COOLDOWN) {
-                                    if (yDiff < -0.15) { 
-                                        triggerGestureScroll('up');
-                                        lastGestureTime = now;
-                                    } else if (yDiff > 0.15) { 
-                                        triggerGestureScroll('down');
-                                        lastGestureTime = now;
-                                    }
-                                }
-                            }
-                        }
-
-                        // 실시간 손가락 확장도(avgExt) 수치를 비디오 진행률에 매핑 (Scrubbing)
-                        // avgExt 관찰치 범위: 주먹 쥘 때 최하 약 1.15 ~ 활짝 펼칠 때 최고 약 1.65
-                        const minScrubExt = 1.15;
-                        const maxScrubExt = 1.65;
-                        
-                        let computedProgress = (avgExt - minScrubExt) / (maxScrubExt - minScrubExt);
-                        // 수치를 0.0 ~ 1.0 범위로 엄격히 클램핑
-                        targetProgress = Math.max(0.0, Math.min(1.0, computedProgress));
-                    }
-                } else {
-                    // 손 감지가 화면 밖으로 완전히 이탈했을 때: 자연스러운 상태 복귀 유도 (우아하게 만개한 상태 1.0 복귀)
-                    targetProgress = 1.0;
-
-                    lastExtendedGesture = 'none';
-                    gestureOneCount = 0;
-                    gestureTwoCount = 0;
-                    gestureShakaPlayCount = 0;
-                    gestureShakaMuteCount = 0;
-                    gestureFistCount = 0;
-                }
-                canvasCtx.restore();
-            }
-
-            // 미디어파이프 트래킹 초기화 (웹캠 구동)
-            async function initHandsTracking() {
-                if (cameraStarted) return;
-                
-                const hands = new Hands({
-                    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-                });
-                
-                hands.setOptions({
-                    maxNumHands: 1,
-                    modelComplexity: 1, // 정밀 모델 채용으로 손가락 벌림 감지 향상
-                    minDetectionConfidence: 0.5,
-                    minTrackingConfidence: 0.5
-                });
-                
-                hands.onResults(onResults);
-                
-                const camera = new Camera(videoElement, {
-                    onFrame: async () => {
-                        await hands.send({ image: videoElement });
-                    },
-                    width: 320,
-                    height: 240
-                });
-                
-                try {
-                    await camera.start();
-                    cameraStarted = true;
-                    canvasElement.width = 320;
-                    canvasElement.height = 240;
-                    canvasElement.classList.add('active');
-                } catch (err) {
-                    console.error("카메라 장치 구동 실패:", err);
-                }
-            }
-
-            // 하와이 제도 3D 로우폴리곤 씬 연출 (Three.js 기반)
-            function initThreeDScene() {
+            let mapSceneInitialized = false;
+            let mapScene, mapCamera, mapRenderer, mapControls;
+            function initThreeDMapScene() {
                 const container = document.getElementById('canvas3d-container');
-                if (!container) return;
+                if (!container || mapSceneInitialized) return;
+                mapSceneInitialized = true;
 
-                const scene = new THREE.Scene();
-                
-                // WebGL 렌더러를 먼저 인스턴스화하여 이방성(Anisotropic) 필터링 하드웨어 한계 정보를 바인딩
-                const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-                renderer.setSize(container.clientWidth, container.clientHeight);
-                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                renderer.shadowMap.enabled = true;
-                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-                container.appendChild(renderer.domElement);
+                mapScene = new THREE.Scene();
+                const w = container.clientWidth || 420;
+                const h = container.clientHeight || 420;
 
-                const camera = new THREE.PerspectiveCamera(38, container.clientWidth / container.clientHeight, 0.1, 100);
-                camera.position.set(0, 7.8, 11.2);
+                mapRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                mapRenderer.setSize(w, h);
+                mapRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                mapRenderer.shadowMap.enabled = true;
+                container.appendChild(mapRenderer.domElement);
 
-                const controls = new THREE.OrbitControls(camera, renderer.domElement);
-                controls.enableDamping = true;
-                controls.dampingFactor = 0.05;
-                controls.enablePan = false;
-                controls.minDistance = 2; 
-                controls.maxDistance = 15;
-                controls.maxPolarAngle = Math.PI / 2 - 0.05; 
-                controls.minPolarAngle = Math.PI / 6;
+                mapCamera = new THREE.PerspectiveCamera(38, w / h, 0.1, 100);
+                mapCamera.position.set(0, 7.8, 11.2);
 
-                // 사용자가 마우스나 터치 조작을 시작하면 오토 패닝 해제 및 자동 턴테이블 정지 후 수동 Orbit 기능 이관
-                controls.addEventListener('start', () => {
-                    isPanning = false;
-                    if (mapAnimState === 'zoomed-out') {
-                        mapAnimState = 'user-control'; // 사용자가 직접 끌기 시작하면 자동 턴테이블 회전을 우아하게 정지
-                    }
-                });
+                if (THREE.OrbitControls) {
+                    mapControls = new THREE.OrbitControls(mapCamera, mapRenderer.domElement);
+                    mapControls.enableDamping = true;
+                    mapControls.dampingFactor = 0.05;
+                    mapControls.enablePan = false;
+                    mapControls.minDistance = 2;
+                    mapControls.maxDistance = 15;
+                    mapControls.maxPolarAngle = Math.PI / 2 - 0.05;
+                    mapControls.minPolarAngle = Math.PI / 6;
 
-                // 조명 설치
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.45);
-                scene.add(ambientLight);
+                    mapControls.addEventListener('start', () => {
+                        isPanning = false;
+                        if (mapAnimState === 'zoomed-out') {
+                            mapAnimState = 'user-control';
+                        }
+                    });
+                }
 
-                const sunLight = new THREE.DirectionalLight(0xfff5e6, 1.15);
-                sunLight.position.set(5, 10, 3);
-                sunLight.castShadow = true;
-                sunLight.shadow.mapSize.width = 1024;
-                sunLight.shadow.mapSize.height = 1024;
-                sunLight.shadow.bias = -0.001;
-                scene.add(sunLight);
-
-                const hemiLight = new THREE.HemisphereLight(0x90e0ef, 0xffffff, 0.35);
-                hemiLight.position.set(0, 10, 0);
-                scene.add(hemiLight);
+                mapScene.add(new THREE.AmbientLight(0xffffff, 0.45));
+                const sun = new THREE.DirectionalLight(0xfff5e6, 1.15);
+                sun.position.set(5, 10, 3);
+                mapScene.add(sun);
+                mapScene.add(new THREE.HemisphereLight(0x90e0ef, 0xffffff, 0.35));
 
                 const archipelago = new THREE.Group();
-                archipelago.scale.setScalar(0.9); 
-                scene.add(archipelago);
+                archipelago.scale.setScalar(0.9);
+                mapScene.add(archipelago);
 
-                // 바다 플레이트 생성
                 const seaGeo = new THREE.CylinderGeometry(5.2, 5.2, 0.15, 32);
                 const seaMat = new THREE.MeshStandardMaterial({ 
-                    color: 0x0a85c2, 
-                    flatShading: true,
-                    transparent: true,
-                    opacity: 0.85,
-                    roughness: 0.15
+                    color: 0x0a85c2, flatShading: true, transparent: true, opacity: 0.85, roughness: 0.15 
                 });
                 const sea = new THREE.Mesh(seaGeo, seaMat);
                 sea.position.y = -0.075;
-                sea.receiveShadow = true;
                 archipelago.add(sea);
 
-                const landMaterial = new THREE.MeshStandardMaterial({ 
-                    color: 0x819675, 
-                    flatShading: true, 
-                    roughness: 0.95,
-                    metalness: 0.05
-                });
-                const beachMaterial = new THREE.MeshStandardMaterial({
-                    color: 0xe9d8b6, 
-                    flatShading: true,
-                    roughness: 0.9
-                });
-                const volcanoMaterial = new THREE.MeshStandardMaterial({
-                    color: 0x545763,
-                    flatShading: true,
-                    roughness: 0.9
-                });
-                const snowMaterial = new THREE.MeshStandardMaterial({
-                    color: 0xffffff,
-                    flatShading: true,
-                    roughness: 0.7
-                });
+                const landMat = new THREE.MeshStandardMaterial({ color: 0x819675, flatShading: true, roughness: 0.95 });
+                const beachMat = new THREE.MeshStandardMaterial({ color: 0xe9d8b6, flatShading: true, roughness: 0.9 });
 
-                function createPerturbedGeometry(geometry, maxOffset) {
-                    const pos = geometry.attributes.position;
-                    const temp = new THREE.Vector3();
-                    const vertexMap = {}; 
-                    
-                    for (let i = 0; i < pos.count; i++) {
-                        temp.fromBufferAttribute(pos, i);
-                        const key = `${Math.round(temp.x * 1000)},${Math.round(temp.y * 1000)},${Math.round(temp.z * 1000)}`;
-                        
-                        if (!vertexMap[key]) {
-                            vertexMap[key] = {
-                                dx: (Math.random() - 0.5) * maxOffset,
-                                dy: (Math.random() - 0.5) * (maxOffset * 0.4), 
-                                dz: (Math.random() - 0.5) * maxOffset
-                            };
-                        }
-                        
-                        const offset = vertexMap[key];
-                        pos.setXYZ(i, temp.x + offset.dx, temp.y + offset.dy, temp.z + offset.dz);
-                    }
-                    geometry.computeVertexNormals();
-                    return geometry;
+                function createIsland(radius, height, x, z, scaleX = 1) {
+                    const grp = new THREE.Group();
+                    const beach = new THREE.Mesh(new THREE.ConeGeometry(radius * 1.15, height * 0.35, 6), beachMat);
+                    beach.position.y = (height * 0.35) / 2;
+                    grp.add(beach);
+                    const land = new THREE.Mesh(new THREE.ConeGeometry(radius, height, 6), landMat);
+                    land.position.y = height / 2;
+                    grp.add(land);
+                    grp.position.set(x, 0, z);
+                    grp.scale.x = scaleX;
+                    return grp;
                 }
 
-                function createRealisticIsland(radius, height, segments, x, z, scaleX = 1, rotateY = 0) {
-                    const islandGroup = new THREE.Group();
-                    
-                    let beachGeo = new THREE.ConeGeometry(radius * 1.15, height * 0.35, segments);
-                    beachGeo = createPerturbedGeometry(beachGeo, radius * 0.08);
-                    const beachMesh = new THREE.Mesh(beachGeo, beachMaterial);
-                    beachMesh.position.y = (height * 0.35) / 2;
-                    beachMesh.castShadow = true;
-                    beachMesh.receiveShadow = true;
-                    islandGroup.add(beachMesh);
-                    
-                    let landGeo = new THREE.ConeGeometry(radius, height, segments);
-                    landGeo = createPerturbedGeometry(landGeo, radius * 0.08);
-                    const landMesh = new THREE.Mesh(landGeo, landMaterial);
-                    landMesh.position.y = height / 2;
-                    landMesh.castShadow = true;
-                    landMesh.receiveShadow = true;
-                    islandGroup.add(landMesh);
-                    
-                    islandGroup.position.set(x, 0, z);
-                    islandGroup.scale.x = scaleX;
-                    islandGroup.rotation.y = rotateY;
-                    return islandGroup;
-                }
+                archipelago.add(createIsland(0.28, 0.15, -3.4, -2.1, 1.2));
+                archipelago.add(createIsland(0.65, 0.48, -2.8, -1.6));
+                archipelago.add(createIsland(0.46, 0.38, -1.8, -0.9, 1.4));
+                archipelago.add(createIsland(0.55, 0.28, -0.4, -0.2, 2.3));
+                archipelago.add(createIsland(0.38, 0.26, -0.6, 0.35));
+                archipelago.add(createIsland(0.22, 0.12, 0.1, 0.7, 1.3));
+                archipelago.add(createIsland(0.70, 0.55, 0.8, 0.42, 1.2));
+                archipelago.add(createIsland(1.4, 1.1, 2.8, 1.6, 1.1));
 
-                // 1. 니이하우 섬
-                const niihau = createRealisticIsland(0.28, 0.15, 5, -3.4, -2.1, 1.2, Math.PI / 4);
-                archipelago.add(niihau);
-
-                // 2. 카우아이 섬
-                const kauai = createRealisticIsland(0.65, 0.48, 6, -2.8, -1.6);
-                archipelago.add(kauai);
-
-                // 3. 오아후 섬
-                const oahuGroup = new THREE.Group();
-                const oahuRangeLeft = createRealisticIsland(0.46, 0.38, 5, -1.8, -0.9, 1.4, -Math.PI / 6);
-                const oahuRangeRight = createRealisticIsland(0.40, 0.34, 5, -1.4, -0.6, 1.2, -Math.PI / 6);
-                oahuGroup.add(oahuRangeLeft);
-                oahuGroup.add(oahuRangeRight);
-                archipelago.add(oahuGroup);
-
-                // 4. 몰로카이 섬
-                const molokai = createRealisticIsland(0.55, 0.28, 4, -0.4, -0.2, 2.3, -Math.PI / 10);
-                archipelago.add(molokai);
-
-                // 5. 라나이 섬
-                const lanai = createRealisticIsland(0.38, 0.26, 5, -0.6, 0.35);
-                archipelago.add(lanai);
-
-                // 6. 카호올라웨 섬
-                const kahoolawe = createRealisticIsland(0.22, 0.12, 4, 0.1, 0.7, 1.3, -Math.PI / 4);
-                archipelago.add(kahoolawe);
-
-                // 7. 마우이 섬
-                const mauiGroup = new THREE.Group();
-                const westMauiMtn = createRealisticIsland(0.55, 0.42, 5, 0.5, 0.3);
-                const haleakalaVolcano = createRealisticIsland(0.85, 0.70, 6, 1.1, 0.55, 1.2);
-                mauiGroup.add(westMauiMtn);
-                mauiGroup.add(haleakalaVolcano);
-                archipelago.add(mauiGroup);
-
-                // 8. 하와이 섬
-                const bigIslandGroup = new THREE.Group();
-                const maunaKea = createRealisticIsland(1.5, 1.25, 6, 2.5, 1.5);
-                const snowCapGeo = new THREE.ConeGeometry(0.45, 0.38, 6);
-                const snowCap = new THREE.Mesh(snowCapGeo, snowMaterial);
-                snowCap.position.set(2.5, 1.12, 1.5);
-                bigIslandGroup.add(maunaKea);
-                bigIslandGroup.add(snowCap);
-
-                const maunaLoa = createRealisticIsland(1.4, 1.05, 6, 3.0, 2.1);
-                bigIslandGroup.add(maunaLoa);
-
-                const kilauea = createRealisticIsland(0.75, 0.32, 5, 3.2, 1.3);
-                kilauea.children[1].material = volcanoMaterial;
-                
-                const lavaGeo = new THREE.SphereGeometry(0.12, 4, 4);
-                const lavaMat = new THREE.MeshBasicMaterial({ color: 0xff4400 });
-                const lava = new THREE.Mesh(lavaGeo, lavaMat);
-                lava.position.set(3.2, 0.28, 1.3);
-                bigIslandGroup.add(kilauea);
-                bigIslandGroup.add(lava);
-
-                archipelago.add(bigIslandGroup);
-
-                // 9. 로우폴리곤 구름
-                const cloudGroup = new THREE.Group();
-                const cloudMat = new THREE.MeshStandardMaterial({ color: 0xffffff, flatShading: true, roughness: 1.0 });
-                const cloudPartGeo = new THREE.DodecahedronGeometry(0.2, 0);
-
-                function createCloud(x, y, z) {
-                    const cloud = new THREE.Group();
-                    for(let i=0; i<3; i++) {
-                        const part = new THREE.Mesh(cloudPartGeo, cloudMat);
-                        part.position.set(i * 0.15 - 0.15, (Math.random() - 0.5) * 0.08, (Math.random() - 0.5) * 0.08);
-                        part.scale.setScalar(0.8 + Math.random() * 0.4);
-                        cloud.add(part);
-                    }
-                    cloud.position.set(x, y, z);
-                    return cloud;
-                }
-
-                const cloud1 = createCloud(-2, 1.5, -1);
-                const cloud2 = createCloud(1, 1.8, 0.5);
-                const cloud3 = createCloud(3, 2.1, 2);
-                cloudGroup.add(cloud1, cloud2, cloud3);
-                archipelago.add(cloudGroup);
-
-                archipelago.position.set(-0.35, 0, -0.35);
-
-                // 라벨 및 꽃 아이콘 마커 드로잉 유틸리티 (3D Map 오버레이 전용)
-                function drawLowPolyFlower(ctx, cx, cy, r, color) {
-                    ctx.save();
-                    ctx.translate(cx, cy);
-                    ctx.fillStyle = color;
-                    ctx.strokeStyle = '#ffffff';
-                    ctx.lineWidth = 5.0; // 2배 고해상도 캔버스 크기에 걸맞게 테두리 두께 2배로 확장
-                    for (let i = 0; i < 5; i++) {
-                        ctx.beginPath();
-                        const angle = (i * 2 * Math.PI) / 5 - Math.PI / 2;
-                        const x1 = Math.cos(angle - 0.3) * r;
-                        const y1 = Math.sin(angle - 0.3) * r;
-                        const x2 = Math.cos(angle) * (r * 1.45);
-                        const y2 = Math.sin(angle) * (r * 1.45);
-                        const x3 = Math.cos(angle + 0.3) * r;
-                        const y3 = Math.sin(angle + 0.3) * r;
-                        ctx.moveTo(0, 0);
-                        ctx.lineTo(x1, y1);
-                        ctx.lineTo(x2, y2);
-                        ctx.lineTo(x3, y3);
-                        ctx.closePath();
-                        ctx.fill();
-                        ctx.stroke();
-                    }
-                    ctx.beginPath();
-                    ctx.arc(0, 0, r * 0.38, 0, Math.PI * 2);
-                    ctx.fillStyle = '#ffcc00';
-                    ctx.fill();
-                    ctx.stroke();
-                    ctx.restore();
-                }
-
-                // 초고해상도 캔버스 생성 및 이방성 필터링, 상위 레이어 오버랩(RenderOrder) 기법 적용
-                function createLabelSprite(text, x, y, z, flowerColor = null) {
+                function createLabelSprite(text, x, y, z, color) {
                     const canvas = document.createElement('canvas');
-                    // 글자 뭉개짐(블러) 현상을 원천 방지하기 위해 드로잉 캔버스 해상도 2배 확대 (512x128 -> 1024x256)
-                    canvas.width = 1024;
-                    canvas.height = 256;
+                    canvas.width = 512;
+                    canvas.height = 128;
                     const ctx = canvas.getContext('2d');
-                    ctx.clearRect(0, 0, 1024, 256);
-                    
-                    if (flowerColor) {
-                        // 박스를 배제하고 공중에 뜬 미니멀 마킹 드로잉
-                        
-                        // 1. 꽃송이 심벌 드로잉 (해상도 비례 크기 및 섀도우 효과 배가)
-                        ctx.save();
-                        ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
-                        ctx.shadowBlur = 15;
-                        ctx.shadowOffsetX = 0;
-                        ctx.shadowOffsetY = 5;
-                        drawLowPolyFlower(ctx, 220, 128, 50, flowerColor); // 꽃 반지름 50px로 확대
-                        ctx.restore();
-                        
-                        // 2. 품종명 텍스트 드로잉 (어느 밝기의 배경과 겹치든 보장되는 선명한 블랙 10px 아웃라인 테두리 처리)
-                        ctx.save();
-                        ctx.font = '700 48px Montserrat, sans-serif'; // 글씨 크기 확대
-                        ctx.textAlign = 'left';
-                        ctx.textBaseline = 'middle';
-                        
-                        ctx.strokeStyle = '#111111';
-                        ctx.lineWidth = 10;
-                        ctx.strokeText(text, 310, 128); // 가로 간격 띄움 조정
-                        
-                        ctx.fillStyle = '#ffffff';
-                        ctx.fillText(text, 310, 128);
-                        ctx.restore();
-                    } else {
-                        // 일반 섬 이름 라벨 텍스트 드로잉 (고해상도 + 드롭 섀도 조합)
-                        ctx.save();
-                        ctx.font = '700 64px Montserrat, sans-serif';
-                        ctx.fillStyle = '#111111';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.shadowColor = 'rgba(255, 255, 255, 0.95)';
-                        ctx.shadowBlur = 15;
-                        ctx.fillText(text, 512, 128);
-                        ctx.restore();
-                    }
+                    ctx.font = '700 34px "Avant Garde", Avantgarde, "Century Gothic", sans-serif';
+                    ctx.fillStyle = color || '#ffffff';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.strokeStyle = '#111111';
+                    ctx.lineWidth = 6;
+                    ctx.strokeText(text, 256, 64);
+                    ctx.fillText(text, 256, 64);
 
                     const texture = new THREE.CanvasTexture(canvas);
-                    
-                    // 확대 축소 시 텍스트 픽셀 계단 현상을 제거하는 트리플 리니어 밉맵 필터 보정
-                    texture.minFilter = THREE.LinearMipmapLinearFilter;
-                    texture.magFilter = THREE.LinearFilter;
-                    texture.generateMipmaps = true;
-                    
-                    // 이방성(Anisotropic) 필터링 하드웨어 최대 강도로 활성화하여 비스듬한 3D 각도에서도 초선명 텍스트 상태 보장
-                    const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
-                    texture.anisotropy = maxAnisotropy;
-
-                    const material = new THREE.SpriteMaterial({ 
-                        map: texture, 
-                        transparent: true, 
-                        depthTest: false, // 다른 지형과의 가려짐 현상을 근본적으로 해제
-                        depthWrite: false
-                    });
-                    
-                    const sprite = new THREE.Sprite(material);
+                    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, depthTest: false }));
                     sprite.position.set(x, y, z);
-                    
-                    // 렌더링 오더를 999로 설정하여 WebGL 캔버스 공간 상의 지형 위에 강제 레이어 오버랩 적용
-                    sprite.renderOrder = 999;
-                    
-                    if (flowerColor) {
-                        sprite.scale.set(3.2, 0.8, 1); 
-                    } else {
-                        sprite.scale.set(2.4, 0.6, 1);
-                    }
+                    sprite.scale.set(2.8, 0.7, 1);
                     return sprite;
                 }
 
-                // 각 섬의 지리적 라벨 배치
-                archipelago.add(createLabelSprite("Niʻihau", -3.4, 0.6, -2.1));
-                archipelago.add(createLabelSprite("Kauaʻi", -2.8, 1.1, -1.6));
-                archipelago.add(createLabelSprite("Oʻahu", -1.6, 1.0, -0.75));
-                archipelago.add(createLabelSprite("Molokaʻi", -0.4, 0.8, -0.2));
-                archipelago.add(createLabelSprite("Lānaʻi", -0.6, 0.8, 0.35));
-                archipelago.add(createLabelSprite("Kahoʻolawe", 0.1, 0.5, 0.7));
-                archipelago.add(createLabelSprite("Maui", 0.8, 1.1, 0.42));
-                archipelago.add(createLabelSprite("Hawaiʻi", 2.8, 1.6, 1.6));
+                // Hawaii
+                flowerSprites["oahu"] = createLabelSprite("H. brackenridgei", -1.6, 0.8, -0.75, "#ffcc00");
+                flowerSprites["molokai"] = createLabelSprite("H. arnottianus", -0.4, 0.7, -0.2, "#f8f9fa");
+                flowerSprites["kauai_north"] = createLabelSprite("H. waimeae", -3.2, 0.85, -1.9, "#ffffff");
+                flowerSprites["kauai_south"] = createLabelSprite("H. clayi", -2.4, 0.85, -1.3, "#d90429");
+                flowerSprites["maui"] = createLabelSprite("H. kokio", 0.8, 0.85, 0.42, "#ff6b35");
 
-                // 5가지 토착 희귀 히비스커스의 자생지 3D 마커 바인딩
-                flowerSprites["oahu"] = createLabelSprite("H. brackenridgei", -1.6, 0.6, -0.75, "#ffcc00");
-                flowerSprites["molokai"] = createLabelSprite("H. arnottianus", -0.4, 0.45, -0.2, "#f8f9fa");
-                flowerSprites["kauai_north"] = createLabelSprite("H. waimeae", -3.2, 0.65, -1.9, "#ffffff");
-                flowerSprites["kauai_south"] = createLabelSprite("H. clayi", -2.4, 0.65, -1.3, "#d90429");
-                flowerSprites["maui"] = createLabelSprite("H. kokio", 0.8, 0.65, 0.42, "#ff6b35");
+                // Mascarene
+                flowerSprites["mascarene_boryanus"] = createLabelSprite("H. boryanus", 0.5, 0.7, -0.1, "#ef4444");
+                flowerSprites["mascarene_fragilis"] = createLabelSprite("H. fragilis", -0.8, 0.7, -0.4, "#f43f5e");
+                flowerSprites["mascarene_genevii"] = createLabelSprite("H. genevii", -0.3, 0.7, -0.3, "#f472b6");
+                flowerSprites["mascarene_liliiflorus"] = createLabelSprite("H. liliiflorus", 1.8, 0.8, 0.2, "#f59e0b");
+                flowerSprites["mascarene_columnaris"] = createLabelSprite("H. columnaris", 0.2, 0.7, -0.2, "#ea580c");
 
-                // archipelago 그룹에 마커 추가
-                for (const key in flowerSprites) {
-                    archipelago.add(flowerSprites[key]);
-                }
+                // Phillip
+                flowerSprites["phillip_insularis"] = createLabelSprite("H. insularis", 0.0, 0.6, 0.0, "#fde047");
 
-                let angle = 0;
-                function animate() {
-                    requestAnimationFrame(animate);
+                // Fiji
+                flowerSprites["fiji_bennettii"] = createLabelSprite("H. bennettii", -1.2, 0.7, -0.5, "#fbcfe8");
+                flowerSprites["fiji_bragliae"] = createLabelSprite("H. bragliae", 1.0, 0.7, 0.1, "#ef4444");
+                flowerSprites["fiji_macverryi"] = createLabelSprite("H. macverryi", 0.4, 0.7, -0.1, "#fb923c");
+                flowerSprites["fiji_storckii"] = createLabelSprite("H. storckii", -0.6, 0.7, -0.3, "#fce7f3");
 
-                    // 자동 완만 자전 모션 (지도가 비활성화인 상태에서만 회전)
-                    if (!is3DActive) {
-                        archipelago.rotation.y = Math.sin(angle) * 0.035;
-                        angle += 0.0012;
-                    } else {
-                        // 3D 지도가 켜졌을 때는 섬 자전축을 0으로 차분하게 홀딩(기존 손목 회전 복귀각 대입)
-                        archipelago.rotation.y = THREE.MathUtils.lerp(archipelago.rotation.y, 0, 0.05);
-                    }
+                for (const k in flowerSprites) archipelago.add(flowerSprites[k]);
 
-                    // 정적 뱃지 마커 크기 일관화
-                    for (const key in flowerSprites) {
-                        if (flowerSprites[key]) {
-                            flowerSprites[key].scale.set(3.2, 0.8, 1);
-                        }
-                    }
+                function animMap() {
+                    requestAnimationFrame(animMap);
+                    if (!is3DActive) return;
 
-                    cloud1.position.x += 0.0015;
-                    if(cloud1.position.x > 5) cloud1.position.x = -5;
-                    cloud2.position.x += 0.001;
-                    if(cloud2.position.x > 5) cloud2.position.x = -5;
-                    cloud3.position.x += 0.002;
-                    if(cloud3.position.x > 5) cloud3.position.x = -5;
-
-                    // 패닝 운동이 활성화 중일 때 LERP 모션 적용, 사용자가 조작하면 패닝을 양도합니다.
                     if (isPanning) {
-                        camera.position.lerp(targetCameraPos, 0.05);
-                        controls.target.lerp(targetLookAtPos, 0.05);
-                        
-                        if (camera.position.distanceTo(targetCameraPos) < 0.05 && 
-                            controls.target.distanceTo(targetLookAtPos) < 0.05) {
-                            isPanning = false;
-                        }
+                        mapCamera.position.lerp(targetCameraPos, 0.05);
+                        if (mapControls) mapControls.target.lerp(targetLookAtPos, 0.05);
+                        if (mapCamera.position.distanceTo(targetCameraPos) < 0.05) isPanning = false;
                     }
 
-                    // 5초 뒤 자동 줌아웃 상태(zoomed-out)일 때 천천히 돌아가는 턴테이블 공전 궤도 구현
-                    if (is3DActive && mapAnimState === 'zoomed-out' && !isPanning) {
-                        // 카메라가 LookAt 타겟(controls.target)을 중심으로 회전하는 벡터 궤적 연산
-                        const offset = new THREE.Vector3().subVectors(camera.position, controls.target);
-                        
-                        // Y축 기준 미세 각도(0.003 라디안) 회전 행렬 곱셈 적용
-                        offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), 0.003); 
-                        
-                        camera.position.copy(controls.target).add(offset);
+                    if (mapAnimState === 'zoomed-out' && !isPanning && mapControls) {
+                        const offset = new THREE.Vector3().subVectors(mapCamera.position, mapControls.target);
+                        offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), 0.003);
+                        mapCamera.position.copy(mapControls.target).add(offset);
                     }
 
-                    controls.update();
-                    renderer.render(scene, camera);
+                    if (mapControls) mapControls.update();
+                    mapRenderer.render(mapScene, mapCamera);
+                }
+                animMap();
+            }
+
+            let cameraStream = null;
+            let hands = null;
+            let mpCamera = null;
+            let cameraStarted = false;
+            let targetProgress = 1.0;
+            let currentProgress = 1.0;
+
+            let isVArmed = true;
+            let isShakaArmed = true;
+            let isZoneArmed = true;
+            let vHoldCounter = 0;
+            let shakaHoldCounter = 0;
+            let pointingHoldCounter = 0;
+            let currentZone = 'middle';
+
+            function updateVideoScrubbing() {
+                requestAnimationFrame(updateVideoScrubbing);
+                const pageE = document.getElementById('pageE');
+                if (!pageE || !pageE.classList.contains('active')) return;
+
+                currentProgress += (targetProgress - currentProgress) * 0.1;
+                if (Math.abs(targetProgress - currentProgress) < 0.001) {
+                    currentProgress = targetProgress;
                 }
 
-                animate();
+                const sections = document.querySelectorAll('.species-section');
+                if (sections && sections[currentSpeciesIdx]) {
+                    const vid = sections[currentSpeciesIdx].querySelector('.flower-video');
+                    if (vid && vid.duration && !vid.seeking && vid.style.display !== 'none') {
+                        const targetTime = Math.min(0.99, Math.max(0.01, currentProgress)) * vid.duration;
+                        if (Math.abs(vid.currentTime - targetTime) > 0.03) {
+                            vid.currentTime = targetTime;
+                        }
+                    }
+                }
+            }
+            updateVideoScrubbing();
 
-                window.addEventListener('resize', () => {
-                    if (!container) return;
-                    camera.aspect = container.clientWidth / container.clientHeight;
-                    camera.updateProjectionMatrix();
-                    renderer.setSize(container.clientWidth, container.clientHeight);
+            function onResults(results) {
+                const gestureCanvas = document.getElementById('gestureCanvas');
+                if (!gestureCanvas) return;
+                const canvasCtx = gestureCanvas.getContext('2d');
+                canvasCtx.save();
+                canvasCtx.clearRect(0, 0, gestureCanvas.width, gestureCanvas.height);
+                
+                if (results.image) {
+                    canvasCtx.drawImage(results.image, 0, 0, gestureCanvas.width, gestureCanvas.height);
+                }
+
+                const w = gestureCanvas.width;
+                const h = gestureCanvas.height;
+
+                canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                canvasCtx.setLineDash([4, 4]);
+                canvasCtx.lineWidth = 1;
+                
+                canvasCtx.beginPath();
+                canvasCtx.moveTo(0, h * 0.25);
+                canvasCtx.lineTo(w, h * 0.25);
+                canvasCtx.stroke();
+
+                canvasCtx.beginPath();
+                canvasCtx.moveTo(0, h * 0.75);
+                canvasCtx.lineTo(w, h * 0.75);
+                canvasCtx.stroke();
+                canvasCtx.setLineDash([]);
+
+                let statusLabel = "WAITING";
+                let statusColor = "rgba(255, 255, 255, 0.6)";
+
+                if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                    const landmarks = results.multiHandLandmarks[0];
+
+                    if (window.drawConnectors && window.HAND_CONNECTIONS) {
+                        drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {color: '#ffffff', lineWidth: 2});
+                        drawLandmarks(canvasCtx, landmarks, {color: '#ffffff', lineWidth: 1, radius: 3});
+                    }
+
+                    const wrist = landmarks[0];
+                    const indexTip = landmarks[8];
+                    const indexPip = landmarks[6];
+                    const middleTip = landmarks[12];
+                    const middlePip = landmarks[10];
+                    const ringTip = landmarks[16];
+                    const ringPip = landmarks[14];
+                    const pinkyTip = landmarks[20];
+                    const pinkyPip = landmarks[18];
+                    const middleMCP = landmarks[9];
+
+                    const getDist = (p1, p2) => Math.hypot(p1.x - p2.x, p1.y - p2.y);
+                    const scale = getDist(wrist, middleMCP) || 1;
+
+                    const indexExt = getDist(indexTip, wrist) / scale;
+                    const middleExt = getDist(middleTip, wrist) / scale;
+                    const ringExt = getDist(ringTip, wrist) / scale;
+                    const pinkyExt = getDist(pinkyTip, wrist) / scale;
+                    const avgExt = (indexExt + middleExt + ringExt + pinkyExt) / 4;
+
+                    const thumbTip = landmarks[4];
+                    const thumbMCP = landmarks[2];
+                    const thumbLen = getDist(thumbTip, thumbMCP) / scale;
+
+                    const isIndexFolded = getDist(indexTip, wrist) < getDist(indexPip, wrist) * 1.05;
+                    const isMiddleFolded = getDist(middleTip, wrist) < getDist(middlePip, wrist) * 1.05;
+                    const isRingFolded = getDist(ringTip, wrist) < getDist(ringPip, wrist) * 1.05;
+                    const isPinkyFolded = getDist(pinkyTip, wrist) < getDist(pinkyPip, wrist) * 1.05;
+
+                    const isTightFist = (avgExt < 1.08) && isMiddleFolded && isRingFolded && isPinkyFolded;
+                    const isHandOpen = (avgExt > 1.38);
+
+                    if (isHandOpen) {
+                        isVArmed = true;
+                        isShakaArmed = true;
+                    }
+
+                    const isVSign = (indexExt > 1.42) && (middleExt > 1.42) && (ringExt < 1.15) && (pinkyExt < 1.15) && isRingFolded && isPinkyFolded;
+                    const isShakaSign = (thumbLen > 0.55) && (pinkyExt > 1.35) && (indexExt < 1.25) && (middleExt < 1.25) && (ringExt < 1.25) && isIndexFolded && isMiddleFolded;
+                    const isPurePointing = (indexExt > 1.45) && (middleExt < 1.15) && (ringExt < 1.15) && (pinkyExt < 1.15) && isMiddleFolded && isRingFolded;
+
+                    const yPos = indexTip.y;
+                    if (yPos < 0.25) {
+                        currentZone = 'top';
+                    } else if (yPos > 0.75) {
+                        currentZone = 'bottom';
+                    } else if (yPos >= 0.35 && yPos <= 0.65) {
+                        currentZone = 'middle';
+                        isZoneArmed = true;
+                    }
+
+                    // Gesture A: V-Sign for Info
+                    if (isVSign) {
+                        vHoldCounter++;
+                        shakaHoldCounter = 0;
+                        pointingHoldCounter = 0;
+
+                        if (vHoldCounter >= 4 && isVArmed) {
+                            isVArmed = false;
+                            vHoldCounter = 0;
+
+                            const sections = document.querySelectorAll('.species-section');
+                            const currentSection = sections[currentSpeciesIdx];
+                            const currentInfo = currentSection ? currentSection.querySelector('.info-wrapper') : null;
+                            const canvas3dContainer = document.getElementById('canvas3d-container');
+                            const isMapOpen = canvas3dContainer && canvas3dContainer.classList.contains('active');
+
+                            if (isMapOpen) {
+                                closeMap();
+                            }
+
+                            if (currentInfo) {
+                                const isInfoOpen = currentInfo.classList.contains('force-show');
+                                if (isInfoOpen) {
+                                    currentInfo.classList.remove('force-show');
+                                    statusLabel = "INFO CLOSED";
+                                } else {
+                                    currentInfo.classList.add('force-show');
+                                    statusLabel = "INFO OPENED";
+                                }
+                            }
+                            statusColor = "#10B981";
+                        } else if (!isVArmed) {
+                            statusLabel = "V-SIGN HOLD (IDLE)";
+                            statusColor = "rgba(255, 255, 255, 0.4)";
+                        }
+                    }
+                    // Gesture B: Shaka for 3D Map
+                    else if (isShakaSign) {
+                        shakaHoldCounter++;
+                        vHoldCounter = 0;
+                        pointingHoldCounter = 0;
+
+                        if (shakaHoldCounter >= 4 && isShakaArmed) {
+                            isShakaArmed = false;
+                            shakaHoldCounter = 0;
+
+                            const canvas3dContainer = document.getElementById('canvas3d-container');
+                            const isMapOpen = canvas3dContainer && canvas3dContainer.classList.contains('active');
+
+                            if (isMapOpen) {
+                                closeMap();
+                                statusLabel = "MAP CLOSED";
+                            } else {
+                                openMapForCurrentSpecies();
+                                statusLabel = "MAP OPENED";
+                            }
+                            statusColor = "#38BDF8";
+                        } else if (!isShakaArmed) {
+                            statusLabel = "SHAKA HOLD (IDLE)";
+                            statusColor = "rgba(255, 255, 255, 0.4)";
+                        }
+                    }
+                    // Gesture C: Pointing Zone Scroll
+                    else if (isPurePointing && totalSpecies > 1) {
+                        pointingHoldCounter++;
+                        vHoldCounter = 0;
+                        shakaHoldCounter = 0;
+                        canvasCtx.beginPath();
+                        canvasCtx.arc(indexTip.x * w, indexTip.y * h, 7, 0, Math.PI * 2);
+                        canvasCtx.fillStyle = '#10B981';
+                        canvasCtx.fill();
+
+                        if (pointingHoldCounter >= 4 && isZoneArmed) {
+                            if (currentZone === 'top') {
+                                goToSpecies(currentSpeciesIdx - 1);
+                                isZoneArmed = false;
+                                pointingHoldCounter = 0;
+                                statusLabel = "PREVIOUS SPECIES";
+                                statusColor = "#3B82F6";
+                                canvasCtx.fillStyle = 'rgba(59, 130, 246, 0.35)';
+                                canvasCtx.fillRect(0, 0, w, h * 0.25);
+                            } else if (currentZone === 'bottom') {
+                                goToSpecies(currentSpeciesIdx + 1);
+                                isZoneArmed = false;
+                                pointingHoldCounter = 0;
+                                statusLabel = "NEXT SPECIES";
+                                statusColor = "#3B82F6";
+                                canvasCtx.fillStyle = 'rgba(59, 130, 246, 0.35)';
+                                canvasCtx.fillRect(0, h * 0.75, w, h * 0.25);
+                            }
+                        } else if (!isZoneArmed) {
+                            statusLabel = "RETURN TO MIDDLE TO RESET";
+                            statusColor = "rgba(255, 255, 255, 0.5)";
+                        }
+                    }
+                    // Gesture D: Blooming Control
+                    else {
+                        vHoldCounter = 0;
+                        shakaHoldCounter = 0;
+                        pointingHoldCounter = 0;
+
+                        if (isTightFist) {
+                            targetProgress = 0.0;
+                            statusLabel = "BUD (0%)";
+                            statusColor = "#F59E0B";
+                        } else {
+                            const minScrubExt = 1.18;
+                            const maxScrubExt = 1.65;
+                            let computedProgress = (avgExt - minScrubExt) / (maxScrubExt - minScrubExt);
+                            targetProgress = Math.max(0.0, Math.min(1.0, computedProgress));
+                            statusLabel = "BLOOMING " + Math.round(targetProgress * 100) + "%";
+                        }
+                    }
+                } else {
+                    targetProgress = 1.0;
+                    vHoldCounter = 0;
+                    shakaHoldCounter = 0;
+                    pointingHoldCounter = 0;
+                    isVArmed = true;
+                    isShakaArmed = true;
+                    isZoneArmed = true;
+                    statusLabel = "NO HAND DETECTED";
+                }
+
+                canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+                canvasCtx.fillRect(8, 8, w - 16, 20);
+                canvasCtx.fillStyle = statusColor;
+                canvasCtx.font = 'bold 9px sans-serif';
+                canvasCtx.textAlign = 'center';
+                canvasCtx.textBaseline = 'middle';
+                canvasCtx.fillText(statusLabel, w / 2, 18);
+
+                canvasCtx.restore();
+            }
+
+            async function requestCameraAndStartTracking() {
+                try {
+                    const videoElement = document.querySelector('.input_video');
+                    const gestureCanvas = document.getElementById('gestureCanvas');
+
+                    if (typeof Hands !== 'undefined' && !hands) {
+                        hands = new Hands({
+                            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+                        });
+                        hands.setOptions({
+                            maxNumHands: 1,
+                            modelComplexity: 1,
+                            minDetectionConfidence: 0.5,
+                            minTrackingConfidence: 0.5
+                        });
+                        hands.onResults(onResults);
+                    }
+
+                    if (typeof Camera !== 'undefined' && !mpCamera && videoElement) {
+                        mpCamera = new Camera(videoElement, {
+                            onFrame: async () => {
+                                if (videoElement && hands) {
+                                    await hands.send({ image: videoElement });
+                                }
+                            },
+                            width: 320,
+                            height: 240
+                        });
+                    }
+
+                    if (mpCamera && !cameraStarted) {
+                        mpCamera.start().then(() => {
+                            cameraStarted = true;
+                            if (gestureCanvas) {
+                                gestureCanvas.width = 320;
+                                gestureCanvas.height = 240;
+                                gestureCanvas.classList.add('active');
+                            }
+                        }).catch(e => console.warn("Camera start failed:", e));
+                    }
+                } catch (e) {
+                    console.warn("Camera permission denied or unavailable:", e);
+                }
+            }
+
+            if (startIslandSpeciesBtn) {
+                startIslandSpeciesBtn.addEventListener('click', () => {
+                    requestCameraAndStartTracking().catch(e => console.log(e));
+                    executePageTransitionToE();
                 });
-            } // initThreeDScene 닫는 괄호 완벽 유지
+            }
+
+            if (closeAlertBtn) {
+                closeAlertBtn.addEventListener('click', () => {
+                    customAlert?.classList.remove('active');
+                    requestCameraAndStartTracking().catch(e => console.log(e));
+                    executePageTransitionToE();
+                });
+            }
+
+            if (denyAlertBtn) {
+                denyAlertBtn.addEventListener('click', () => {
+                    customAlert?.classList.remove('active');
+                    executePageTransitionToE();
+                });
+            }
+
+            const gestureGuideOverlay = document.getElementById('gestureGuideOverlay');
+            if (gestureGuideOverlay) {
+                gestureGuideOverlay.addEventListener('mouseenter', () => {
+                    if (gestureGuideOverlay.classList.contains('active')) {
+                        if (cursorText) cursorText.innerText = 'Explore';
+                        customCursor?.classList.add('hover-discover');
+                    }
+                });
+
+                gestureGuideOverlay.addEventListener('mouseleave', () => {
+                    customCursor?.classList.remove('hover-discover');
+                    if (cursorText) cursorText.innerText = '';
+                });
+
+                gestureGuideOverlay.addEventListener('click', () => {
+                    gestureGuideOverlay.classList.remove('active');
+                    customCursor?.classList.remove('hover-discover');
+                    if (cursorText) cursorText.innerText = '';
+                });
+            }
+
+            let audioCtx = null;
+            let isAudioPlaying = false;
+            let rippleLoopInterval = null;
+            let waveGain = null;
+
+            function playWaterDroplet() {
+                if (!audioCtx || audioCtx.state === 'suspended' || !isAudioPlaying) return;
+                
+                try {
+                    const now = audioCtx.currentTime;
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    
+                    const baseFreq = 450 + Math.random() * 650;
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(baseFreq, now);
+                    osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.45, now + 0.08 + Math.random() * 0.06);
+
+                    const filter = audioCtx.createBiquadFilter();
+                    filter.type = 'bandpass';
+                    filter.frequency.setValueAtTime(baseFreq * 0.8, now);
+                    filter.Q.setValueAtTime(4.0, now);
+
+                    const vol = 0.08 + Math.random() * 0.07;
+                    gain.gain.setValueAtTime(0.001, now);
+                    gain.gain.linearRampToValueAtTime(vol, now + 0.015);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12 + Math.random() * 0.08);
+
+                    osc.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start(now);
+                    osc.stop(now + 0.22);
+                } catch (e) {
+                    console.warn("Water drop synth error:", e);
+                }
+            }
+
+            function toggleAmbientSound() {
+                try {
+                    if (!audioCtx) {
+                        const AudioContext = window.AudioContext || window.webkitAudioContext;
+                        audioCtx = new AudioContext();
+                    }
+
+                    if (audioCtx.state === 'suspended') {
+                        audioCtx.resume();
+                    }
+
+                    if (!isAudioPlaying) {
+                        isAudioPlaying = true;
+
+                        const bufferSize = audioCtx.sampleRate * 2;
+                        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                        const output = noiseBuffer.getChannelData(0);
+                        for (let i = 0; i < bufferSize; i++) {
+                            output[i] = Math.random() * 2 - 1;
+                        }
+
+                        const noiseSource = audioCtx.createBufferSource();
+                        noiseSource.buffer = noiseBuffer;
+                        noiseSource.loop = true;
+
+                        const bandpass = audioCtx.createBiquadFilter();
+                        bandpass.type = 'bandpass';
+                        bandpass.frequency.setValueAtTime(650, audioCtx.currentTime);
+                        bandpass.Q.setValueAtTime(2.5, audioCtx.currentTime);
+
+                        const lfo = audioCtx.createOscillator();
+                        lfo.frequency.setValueAtTime(0.35, audioCtx.currentTime);
+
+                        const lfoGain = audioCtx.createGain();
+                        lfoGain.gain.setValueAtTime(350, audioCtx.currentTime);
+                        lfo.connect(lfoGain);
+                        lfoGain.connect(bandpass.frequency);
+
+                        waveGain = audioCtx.createGain();
+                        waveGain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+
+                        noiseSource.connect(bandpass);
+                        bandpass.connect(waveGain);
+                        waveGain.connect(audioCtx.destination);
+
+                        noiseSource.start();
+                        lfo.start();
+
+                        rippleLoopInterval = setInterval(() => {
+                            if (Math.random() > 0.15) playWaterDroplet();
+                            if (Math.random() > 0.5) setTimeout(playWaterDroplet, 60 + Math.random() * 120);
+                        }, 180);
+
+                        soundBtn?.classList.add('playing');
+                    } else {
+                        if (rippleLoopInterval) {
+                            clearInterval(rippleLoopInterval);
+                            rippleLoopInterval = null;
+                        }
+                        if (audioCtx) {
+                            audioCtx.suspend();
+                        }
+                        soundBtn?.classList.remove('playing');
+                        isAudioPlaying = false;
+                    }
+                } catch(e) {
+                    console.warn("Audio Context Error:", e);
+                }
+            }
+
+            if (soundBtn) {
+                soundBtn.addEventListener('click', toggleAmbientSound);
+            }
+
+            if (btnBackHomeHawaii) {
+                btnBackHomeHawaii.addEventListener('click', () => {
+                    closeMap();
+                    if (cursorText) cursorText.innerText = '';
+                    customCursor?.classList.remove('hover-discover');
+                    pageE?.classList.add('transition-out');
+                    
+                    const gestureCanvas = document.getElementById('gestureCanvas');
+                    gestureCanvas?.classList.remove('active');
+
+                    setTimeout(() => {
+                        pageE?.classList.remove('active', 'transition-out');
+                        pageHome?.classList.add('transition-in-prep');
+                        pageHome?.classList.add('active');
+                        isHomeSceneActive = true;
+                        animateHomeScene();
+                        
+                        setTimeout(() => {
+                            pageHome?.classList.remove('transition-in-prep');
+                            resizeHomeSeabedScene();
+                        }, 50);
+                    }, 750);
+                });
+            }
+
+            function goToSpecies(idx) {
+                if (idx < 0 || idx >= totalSpecies) return;
+                currentSpeciesIdx = idx;
+                closeMap();
+                document.querySelectorAll('.info-wrapper').forEach(w => w.classList.remove('force-show'));
+                
+                const archiveContainer = document.getElementById('archiveContainer');
+                if (archiveContainer) {
+                    const stepPercent = 100 / Math.max(1, totalSpecies);
+                    archiveContainer.style.transform = `translateY(-${currentSpeciesIdx * stepPercent}%)`;
+                }
+
+                const dots = document.querySelectorAll('.pagination .dot');
+                dots.forEach((dot, dIdx) => {
+                    if (dot) {
+                        if (dIdx === currentSpeciesIdx) dot.classList.add('active');
+                        else dot.classList.remove('active');
+                    }
+                });
+
+                const videos = document.querySelectorAll('.flower-video');
+                videos.forEach((vid, vIdx) => {
+                    if (vIdx === currentSpeciesIdx) {
+                        vid.currentTime = 0;
+                        vid.play().catch(() => {});
+                    } else {
+                        vid.pause();
+                    }
+                });
+            }
+
+            if (pageE) {
+                pageE.addEventListener('wheel', (e) => {
+                    if (!pageE.classList.contains('active')) return;
+                    if (isSpeciesScrolling || totalSpecies <= 1) return;
+
+                    isSpeciesScrolling = true;
+                    if (e.deltaY > 0) {
+                        goToSpecies(currentSpeciesIdx + 1);
+                    } else {
+                        goToSpecies(currentSpeciesIdx - 1);
+                    }
+
+                    setTimeout(() => { isSpeciesScrolling = false; }, 900);
+                }, { passive: true });
+
+                let touchStartY = 0;
+                let touchEndY = 0;
+
+                pageE.addEventListener('touchstart', (e) => {
+                    if (e.touches && e.touches.length > 0) {
+                        touchStartY = e.touches[0].clientY;
+                    }
+                }, { passive: true });
+
+                pageE.addEventListener('touchend', (e) => {
+                    if (!pageE.classList.contains('active')) return;
+                    if (e.changedTouches && e.changedTouches.length > 0) {
+                        touchEndY = e.changedTouches[0].clientY;
+                        const diffY = touchStartY - touchEndY;
+
+                        if (Math.abs(diffY) > 35) {
+                            if (diffY > 0) {
+                                goToSpecies(currentSpeciesIdx + 1);
+                            } else {
+                                goToSpecies(currentSpeciesIdx - 1);
+                            }
+                        }
+                    }
+                }, { passive: true });
+            }
+
+            function resizeHomeSeabedScene() {
+                const container = document.getElementById('home-caustic-container');
+                if (!container || !homeRenderer || !homeCamera) return;
+
+                const w = Math.max(1, container.clientWidth || window.innerWidth);
+                const h = Math.max(1, container.clientHeight || window.innerHeight);
+
+                homeCamera.aspect = w / h;
+                homeCamera.updateProjectionMatrix();
+                homeRenderer.setSize(w, h);
+                if (causticMaterial && causticMaterial.uniforms && causticMaterial.uniforms.uResolution) {
+                    causticMaterial.uniforms.uResolution.value.set(w, h);
+                }
+                if (topCausticMaterial && topCausticMaterial.uniforms && topCausticMaterial.uniforms.uResolution) {
+                    topCausticMaterial.uniforms.uResolution.value.set(w, h);
+                }
+            }
+
+            function initHomeSeabedScene() {
+                const container = document.getElementById('home-caustic-container');
+                if (!container) return;
+
+                if (homeSeabedInitialized) {
+                    resizeHomeSeabedScene();
+                    return;
+                }
+
+                if (typeof THREE === 'undefined') {
+                    console.error('Three.js library is not loaded');
+                    return;
+                }
+
+                try {
+                    homeSeabedInitialized = true;
+                    homeScene = new THREE.Scene();
+                    
+                    const w = Math.max(1, container.clientWidth || window.innerWidth || 800);
+                    const h = Math.max(1, container.clientHeight || window.innerHeight || 600);
+
+                    homeCamera = new THREE.PerspectiveCamera(48, w / h, 0.1, 1000);
+                    homeCamera.position.set(0, 0.35, 2.1);
+                    homeCamera.lookAt(0, 0.12, -1.0);
+
+                    homeRenderer = new THREE.WebGLRenderer({ 
+                        antialias: true, 
+                        alpha: true,
+                        powerPreference: 'high-performance'
+                    });
+                    homeRenderer.setSize(w, h);
+                    homeRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                    
+                    container.innerHTML = '';
+                    container.appendChild(homeRenderer.domElement);
+
+                    homeRenderer.domElement.addEventListener('webglcontextlost', (event) => {
+                        event.preventDefault();
+                        if (animFrameId) cancelAnimationFrame(animFrameId);
+                    }, false);
+
+                    homeRenderer.domElement.addEventListener('webglcontextrestored', () => {
+                        homeSeabedInitialized = false;
+                        initHomeSeabedScene();
+                    }, false);
+
+                    const causticShader = {
+                        uniforms: {
+                            uTime: { value: 0 },
+                            uResolution: { value: new THREE.Vector2(w, h) }
+                        },
+                        vertexShader: `
+                            varying vec2 vUv;
+                            varying vec3 vWorldPosition;
+                            varying vec3 vNormal;
+
+                            void main() {
+                                vUv = uv;
+                                vec3 pos = position;
+                                
+                                float dune = sin(pos.x * 1.2 + pos.y * 0.8) * 0.09 + cos(pos.x * 2.2 - pos.y * 1.5) * 0.04;
+                                pos.z += dune;
+
+                                float dX = cos(pos.x * 1.2 + pos.y * 0.8) * 0.108 - sin(pos.x * 2.2 - pos.y * 1.5) * 0.088;
+                                float dY = cos(pos.x * 1.2 + pos.y * 0.8) * 0.072 + sin(pos.x * 2.2 - pos.y * 1.5) * 0.06;
+                                vNormal = normalize(vec3(-dX, -dY, 1.0));
+
+                                vec4 worldPosition = modelMatrix * vec4(pos, 1.0);
+                                vWorldPosition = worldPosition.xyz;
+                                gl_Position = projectionMatrix * viewMatrix * worldPosition;
+                            }
+                        `,
+                        fragmentShader: `
+                            uniform float uTime;
+                            uniform vec2 uResolution;
+                            varying vec2 vUv;
+                            varying vec3 vWorldPosition;
+                            varying vec3 vNormal;
+
+                            float fluidWaveCaustics(vec2 p, float t, float scale) {
+                                vec2 st = p * scale;
+                                vec2 warp = vec2(
+                                    sin(st.y * 1.8 + sin(t * 0.9)) * 0.25 + cos(st.x * 1.4 - cos(t * 0.7)) * 0.2,
+                                    cos(st.x * 1.6 + cos(t * 0.8)) * 0.25 + sin(st.y * 1.3 - sin(t * 1.0)) * 0.2
+                                );
+                                vec2 q = st + warp;
+
+                                float waveA = sin(q.x * 2.5 + sin(t * 1.2)) + cos(q.y * 2.2 - cos(t * 1.1));
+                                float waveB = sin((q.x + q.y) * 1.9 + cos(t * 1.0)) + cos((q.x - q.y) * 1.9 + sin(t * 1.3));
+
+                                float waveInterference = (waveA + waveB) * 0.25;
+                                return pow(clamp(1.0 - abs(waveInterference), 0.0, 1.0), 3.0);
+                            }
+
+                            void main() {
+                                vec2 uv = vWorldPosition.xz * 0.85;
+                                float t = uTime * 0.57;
+
+                                float caustic1 = fluidWaveCaustics(uv, t, 1.0);
+                                float caustic2 = fluidWaveCaustics(uv + vec2(1.5, -0.8), t * 0.85 + 2.4, 1.45);
+                                float caustic = clamp(caustic1 + caustic2 * 0.50, 0.0, 1.0);
+
+                                vec3 lightDir = normalize(vec3(0.3, 0.8, 0.5));
+                                float duneShading = max(0.0, dot(vNormal, lightDir)) * 0.08;
+
+                                vec3 sandBase = vec3(0.72, 0.68, 0.63) + vec3(duneShading);
+                                vec3 coreSunlight = vec3(0.92, 0.87, 0.83);
+                                vec3 edgePinkGlow = vec3(0.97, 0.72, 0.81);
+
+                                float coreMask = pow(caustic, 2.2);
+                                float edgeMask = clamp(caustic - coreMask, 0.0, 1.0);
+
+                                vec3 causticColor = coreSunlight * coreMask + edgePinkGlow * edgeMask * 1.45;
+
+                                float dist = length(vWorldPosition.xz);
+                                float alpha = smoothstep(2.8, 0.5, dist);
+
+                                vec3 sandLit = sandBase + causticColor * 0.25;
+                                gl_FragColor = vec4(sandLit, alpha);
+                            }
+                        `
+                    };
+
+                    const topCausticShader = {
+                        uniforms: {
+                            uTime: { value: 0 },
+                            uResolution: { value: new THREE.Vector2(w, h) }
+                        },
+                        vertexShader: `
+                            varying vec2 vUv;
+                            varying vec3 vWorldPos;
+                            void main() {
+                                vUv = uv;
+                                vec4 worldPos = modelMatrix * vec4(position, 1.0);
+                                vWorldPos = worldPos.xyz;
+                                gl_Position = projectionMatrix * viewMatrix * worldPos;
+                            }
+                        `,
+                        fragmentShader: `
+                            uniform float uTime;
+                            uniform vec2 uResolution;
+                            varying vec2 vUv;
+                            varying vec3 vWorldPos;
+
+                            float surfaceRipple(vec2 p, float t) {
+                                vec2 st = p * 1.2;
+                                float tSlow = t * 0.28;
+                                
+                                vec2 warp = vec2(
+                                    sin(st.y * 2.0 + tSlow) * 0.28 + cos(st.x * 1.5 - tSlow * 0.8) * 0.18,
+                                    cos(st.x * 1.8 - tSlow * 0.9) * 0.28 + sin(st.y * 1.6 + tSlow) * 0.18
+                                );
+                                vec2 q = st + warp;
+
+                                float w1 = sin(q.x * 3.2 + tSlow * 1.1) + cos(q.y * 2.6 - tSlow * 1.0);
+                                float w2 = sin((q.x + q.y) * 2.2 - tSlow) + cos((q.x - q.y) * 2.0 + tSlow * 1.2);
+
+                                float pattern = pow(clamp(1.0 - abs(w1 + w2) * 0.32, 0.0, 1.0), 3.8);
+                                return pattern;
+                            }
+
+                            void main() {
+                                vec2 uv = vWorldPos.xz * 0.65;
+                                float t = uTime;
+
+                                float ripple1 = surfaceRipple(uv, t);
+                                float ripple2 = surfaceRipple(uv * 1.25 + vec2(1.1, -0.6), t * 0.8 + 1.4);
+                                float finalRipple = clamp(ripple1 * 0.65 + ripple2 * 0.45, 0.0, 1.0);
+
+                                vec2 screenUv = gl_FragCoord.xy / uResolution;
+                                float topFade = smoothstep(0.52, 0.98, screenUv.y);
+
+                                vec3 pureWhite = vec3(1.0, 1.0, 1.0);
+                                float intensity = finalRipple * topFade * 0.26;
+
+                                gl_FragColor = vec4(pureWhite * intensity, intensity);
+                            }
+                        `
+                    };
+
+                    const planeGeo = new THREE.PlaneGeometry(32, 32, 80, 80);
+                    causticMaterial = new THREE.ShaderMaterial({
+                        uniforms: causticShader.uniforms,
+                        vertexShader: causticShader.vertexShader,
+                        fragmentShader: causticShader.fragmentShader,
+                        side: THREE.DoubleSide,
+                        transparent: true
+                    });
+                    
+                    const planeMesh = new THREE.Mesh(planeGeo, causticMaterial);
+                    planeMesh.rotation.x = -Math.PI / 2;
+                    planeMesh.position.y = -0.4;
+                    homeScene.add(planeMesh);
+
+                    const topPlaneGeo = new THREE.PlaneGeometry(32, 16, 40, 40);
+                    topCausticMaterial = new THREE.ShaderMaterial({
+                        uniforms: topCausticShader.uniforms,
+                        vertexShader: topCausticShader.vertexShader,
+                        fragmentShader: topCausticShader.fragmentShader,
+                        side: THREE.DoubleSide,
+                        transparent: true,
+                        blending: THREE.AdditiveBlending,
+                        depthWrite: false
+                    });
+                    const topPlaneMesh = new THREE.Mesh(topPlaneGeo, topCausticMaterial);
+                    topPlaneMesh.rotation.x = Math.PI * 0.42;
+                    topPlaneMesh.position.set(0, 0.85, -0.2);
+                    homeScene.add(topPlaneMesh);
+
+                    window.addEventListener('resize', resizeHomeSeabedScene);
+
+                    animateHomeScene();
+                } catch (e) {
+                    console.error('Error initializing 3D Seabed canvas:', e);
+                }
+            }
+
+            initHomeSeabedScene();
         });
     </script>
 </body>
