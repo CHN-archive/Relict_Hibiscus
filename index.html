@@ -75,14 +75,7 @@
             transform: translateX(0);
         }
 
-        .input_video {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            opacity: 0;
-            overflow: hidden;
-            pointer-events: none;
-        }
+        .input_video { display: none; }
 
         .output_canvas {
             position: absolute; 
@@ -818,6 +811,10 @@
             margin-bottom: 22px;
         }
 
+        .gesture-numbers-row.cols-2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
         .gesture-num-item {
             background: rgba(250, 249, 245, 0.75);
             border: 1px solid rgba(17, 17, 17, 0.08);
@@ -973,7 +970,7 @@
     <!-- Intro Pages -->
     <section id="pageA" class="page active">
         <div class="intro-text-group">
-            <p class="en-text">This website was created to archive rare endangered hibiscus species native to isolated islands around the world.</p>
+            <p class="en-text">This website was created to archive rare endangered<br>hibiscus species native to isolated islands around the world.</p>
             <p class="ko-text">이 웹사이트는 전 세계 고립된 섬에 자생하는<br>희귀 멸종위기 히비스커스 종들을 기록하기 위해 만들어졌습니다.</p>
         </div>
     </section>
@@ -1106,24 +1103,42 @@
             <div class="light-stream-bg"></div>
             <div class="guide-card">
                 <h3 class="guide-title">Gesture Navigation Guide</h3>
-                <p class="guide-subtitle">손 제스처로 꽃을 개화시키고 아카이브를 탐험해보세요.</p>
-
-                <div class="gesture-section-label">손을 벌리고 오므려 꽃을 조절하세요</div>
-                <div class="gesture-item gesture-item-wide" style="margin-bottom: 12px;">
-                    <div class="gesture-icon">
-                        <svg viewBox="0 0 34 34" fill="none" stroke="#111111" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="17" cy="17" r="13" stroke-opacity="0.25" stroke-dasharray="2 2" />
-                            <path d="M17 6v8M25.5 10l-5.5 5.5M28 18.5h-8.5M25 26l-5-5.5M17 28v-8M9 26l5-5.5M6 18.5h8.5M9 10l5 5.5" />
-                        </svg>
+                <p class="guide-subtitle">새로운 제스처 인터랙션을 이용해 꽃을 개화시키고 아카이브를 탐험해보세요.</p>
+                
+                <div class="gesture-section-label">손가락 개수로 조작하세요</div>
+                <div class="gesture-numbers-row cols-2">
+                    <div class="gesture-num-item">
+                        <div class="gesture-num-circle">1</div>
+                        <div class="gesture-num-label">개화</div>
                     </div>
-                    <div class="gesture-text">
-                        <div class="gesture-name">손 펴기 · 오므리기</div>
-                        <div class="gesture-desc">편 정도에 따라 실시간으로 개화 · 봉오리 조절</div>
+                    <div class="gesture-num-item">
+                        <div class="gesture-num-circle">2</div>
+                        <div class="gesture-num-label">봉오리</div>
+                    </div>
+                </div>
+
+                <div class="gesture-section-label">엄지손가락 방향으로 정보를 확인하세요</div>
+                <div class="gesture-numbers-row cols-2">
+                    <div class="gesture-num-item">
+                        <div class="gesture-num-circle">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#111111" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M7 22V11m0 0L3 12v9a2 2 0 0 0 2 2h11.5a2 2 0 0 0 2-1.6l1.3-6.5A2 2 0 0 0 17.8 13H13V5a2 2 0 0 0-4 0v6.5" />
+                            </svg>
+                        </div>
+                        <div class="gesture-num-label">정보 열기</div>
+                    </div>
+                    <div class="gesture-num-item">
+                        <div class="gesture-num-circle">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#111111" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" transform="rotate(180 12 12)">
+                                <path d="M7 22V11m0 0L3 12v9a2 2 0 0 0 2 2h11.5a2 2 0 0 0 2-1.6l1.3-6.5A2 2 0 0 0 17.8 13H13V5a2 2 0 0 0-4 0v6.5" />
+                            </svg>
+                        </div>
+                        <div class="gesture-num-label">정보 닫기</div>
                     </div>
                 </div>
 
                 <div class="gesture-section-label">화면을 가리켜 이동하세요</div>
-                <div class="gesture-item gesture-item-wide" style="margin-bottom: 12px;">
+                <div class="gesture-item gesture-item-wide">
                     <div class="gesture-icon">
                         <svg viewBox="0 0 34 34" fill="none" stroke="#111111" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="3" y="4" width="28" height="26" rx="5" stroke-dasharray="2 2" stroke-opacity="0.45" />
@@ -1145,45 +1160,15 @@
                     </div>
                 </div>
 
-                <div class="gesture-section-label">주먹 쥐고 엄지로 메뉴를 조작하세요</div>
-                <div class="gesture-item gesture-item-wide" style="margin-bottom: 12px;">
+                <div class="gesture-item gesture-item-wide" style="margin-top: 12px;">
                     <div class="gesture-icon">
                         <svg viewBox="0 0 34 34" fill="none" stroke="#111111" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="11" y="15" width="12" height="12" rx="2.5" />
-                            <path d="M14 15V8a1.8 1.8 0 0 1 3.6 0v2.2" />
-                            <path d="M17.6 10.2h2.3a1.8 1.8 0 0 1 1.8 1.8v3" />
-                        </svg>
-                    </div>
-                    <div class="gesture-text">
-                        <div class="gesture-name">주먹 쥐고 엄지 위로</div>
-                        <div class="gesture-desc">정보창 열기</div>
-                    </div>
-                </div>
-                <div class="gesture-item gesture-item-wide" style="margin-bottom: 12px;">
-                    <div class="gesture-icon">
-                        <svg viewBox="0 0 34 34" fill="none" stroke="#111111" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="11" y="7" width="12" height="12" rx="2.5" />
-                            <path d="M14 19v7a1.8 1.8 0 0 0 3.6 0v-2.2" />
-                            <path d="M17.6 23.8h2.3a1.8 1.8 0 0 0 1.8-1.8v-3" />
-                        </svg>
-                    </div>
-                    <div class="gesture-text">
-                        <div class="gesture-name">주먹 쥐고 엄지 아래로</div>
-                        <div class="gesture-desc">메인 화면으로 나가기</div>
-                    </div>
-                </div>
-
-                <div class="gesture-section-label">새끼손가락만 펴세요</div>
-                <div class="gesture-item gesture-item-wide">
-                    <div class="gesture-icon">
-                        <svg viewBox="0 0 34 34" fill="none" stroke="#111111" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="10" y="16" width="14" height="11" rx="3" />
-                            <path d="M22 16v-7.5a1.7 1.7 0 0 1 3.4 0V17" />
+                            <path d="M20 22v-3a2 2 0 0 0-2-2h-2m0 0V9a2 2 0 0 0-4 0v8m4 0V6.5a2 2 0 0 0-4 0V17m-4 0c0-2-1.5-3-2.5-3.5a1.5 1.5 0 0 0-2 2C8.5 18 10 22 10 24a4 4 0 0 0 4 4h4a4 4 0 0 0 4-4v-2" />
                         </svg>
                     </div>
                     <div class="gesture-text">
                         <div class="gesture-name">새끼손가락만 펴기</div>
-                        <div class="gesture-desc">정보창 닫기</div>
+                        <div class="gesture-desc">이전 화면(섬 선택)으로 돌아가기</div>
                     </div>
                 </div>
             </div>
@@ -1309,7 +1294,7 @@
                         habitat: "오아후 및 몰로카이 섬의 다습한 산악 열대우림",
                         feature: "순백의 꽃잎 위로 대조를 이루며 뻗어 나온 붉은 수술대가 기막힌 시각적 대조를 연출합니다. 하와이 고유종 중 보기 드물게 매혹적인 향기를 머금고 있습니다.",
                         islandKey: "molokai",
-                        video: "white1.mp4",
+                        video: "white_1.mp4",
                         flipped: false
                     },
                     {
@@ -1318,7 +1303,7 @@
                         habitat: "카우아이 섬의 울창한 와이메아 캐년 일대",
                         feature: "해 질 녘이 되면 은은한 달콤한 잔향을 피워내는 독특한 백색 히비스커스입니다. 오직 카우아이 섬의 비바람 가득한 계곡 절벽에서만 자생합니다.",
                         islandKey: "kauai_north",
-                        video: "white2.mp4",
+                        video: "white_2.mp4",
                         flipped: true
                     },
                     {
@@ -1632,20 +1617,24 @@
             let hands = null;
             let mpCamera = null;
             let cameraStarted = false;
-            let targetProgress = 0.0;
-            let currentProgress = 0.0;
+            let targetProgress = 1.0;
+            let currentProgress = 1.0;
 
+            let isVArmed = true;
+            let isShakaArmed = true;
             let isZoneArmed = true;
-            let pointingHoldCounter = 0;
-            let currentZone = 'middle';
-            let noHandCounter = 0;
-            let smoothedExt = null;
-            let isOpenInfoArmed = true;
-            let isCloseInfoArmed = true;
+            let isBloomArmed = true;
+            let isBudArmed = true;
             let isBackArmed = true;
-            let openInfoHoldCounter = 0;
-            let closeInfoHoldCounter = 0;
+            let vHoldCounter = 0;
+            let shakaHoldCounter = 0;
+            let pointingHoldCounter = 0;
+            let bloomHoldCounter = 0;
+            let budHoldCounter = 0;
             let backHoldCounter = 0;
+            let currentZone = 'middle';
+            let currentFlowerVideo = null;
+            let scrubFrameCount = 0;
 
             function updateVideoScrubbing() {
                 requestAnimationFrame(updateVideoScrubbing);
@@ -1657,14 +1646,18 @@
                     currentProgress = targetProgress;
                 }
 
-                const sections = document.querySelectorAll('.species-section');
-                if (sections && sections[currentSpeciesIdx]) {
-                    const vid = sections[currentSpeciesIdx].querySelector('.flower-video');
-                    if (vid && vid.duration && !vid.seeking && vid.style.display !== 'none') {
-                        const targetTime = Math.min(0.99, Math.max(0.01, currentProgress)) * vid.duration;
-                        if (Math.abs(vid.currentTime - targetTime) > 0.03) {
-                            vid.currentTime = targetTime;
-                        }
+                // Throttle actual video seeks to ~20/sec instead of every animation frame.
+                // Seeking a video is a relatively heavy, semi-blocking operation, and doing
+                // it 60 times a second while MediaPipe is also running was the main cause
+                // of the stutter during gestures.
+                scrubFrameCount++;
+                if (scrubFrameCount % 3 !== 0) return;
+
+                const vid = currentFlowerVideo;
+                if (vid && vid.duration && !vid.seeking && vid.style.display !== 'none') {
+                    const targetTime = Math.min(0.99, Math.max(0.01, currentProgress)) * vid.duration;
+                    if (Math.abs(vid.currentTime - targetTime) > 0.05) {
+                        vid.currentTime = targetTime;
                     }
                 }
             }
@@ -1684,40 +1677,33 @@
                 const w = gestureCanvas.width;
                 const h = gestureCanvas.height;
 
-                canvasCtx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-                canvasCtx.setLineDash([4, 4]);
-                canvasCtx.lineWidth = 1;
-                
-                canvasCtx.beginPath();
-                canvasCtx.moveTo(0, h * 0.25);
-                canvasCtx.lineTo(w, h * 0.25);
-                canvasCtx.stroke();
+                canvasCtx.save();
+                const topGrad = canvasCtx.createLinearGradient(0, 0, 0, h * 0.22);
+                topGrad.addColorStop(0, 'rgba(212, 175, 120, 0.22)');
+                topGrad.addColorStop(1, 'rgba(212, 175, 120, 0)');
+                canvasCtx.fillStyle = topGrad;
+                canvasCtx.fillRect(0, 0, w, h * 0.22);
 
-                canvasCtx.beginPath();
-                canvasCtx.moveTo(0, h * 0.75);
-                canvasCtx.lineTo(w, h * 0.75);
-                canvasCtx.stroke();
-                canvasCtx.setLineDash([]);
+                const bottomGrad = canvasCtx.createLinearGradient(0, h * 0.78, 0, h);
+                bottomGrad.addColorStop(0, 'rgba(212, 175, 120, 0)');
+                bottomGrad.addColorStop(1, 'rgba(212, 175, 120, 0.22)');
+                canvasCtx.fillStyle = bottomGrad;
+                canvasCtx.fillRect(0, h * 0.78, w, h * 0.22);
+                canvasCtx.restore();
 
-                let statusLabel = "WAITING";
-                let statusColor = "rgba(255, 255, 255, 0.6)";
+                let statusLabel = "손을 비춰주세요";
+                let statusColor = "rgba(250, 246, 235, 0.75)";
 
-                const handednessScore = results.multiHandedness && results.multiHandedness[0]
-                    ? results.multiHandedness[0].score
-                    : 0;
-
-                if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0 && handednessScore >= 0.75) {
-                    noHandCounter = 0;
+                if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
                     const landmarks = results.multiHandLandmarks[0];
 
                     if (window.drawConnectors && window.HAND_CONNECTIONS) {
-                        drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {color: '#ffffff', lineWidth: 2});
-                        drawLandmarks(canvasCtx, landmarks, {color: '#ffffff', lineWidth: 1, radius: 3});
+                        drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {color: 'rgba(250, 246, 235, 0.55)', lineWidth: 1});
+                        drawLandmarks(canvasCtx, landmarks, {color: 'rgba(250, 246, 235, 0.85)', fillColor: 'rgba(212, 175, 120, 0.9)', lineWidth: 1, radius: 2});
                     }
 
                     const wrist = landmarks[0];
                     const thumbTip = landmarks[4];
-                    const thumbIP = landmarks[3];
                     const indexTip = landmarks[8];
                     const indexPip = landmarks[6];
                     const middleTip = landmarks[12];
@@ -1735,6 +1721,7 @@
                     const middleExt = getDist(middleTip, wrist) / scale;
                     const ringExt = getDist(ringTip, wrist) / scale;
                     const pinkyExt = getDist(pinkyTip, wrist) / scale;
+                    const thumbExt = getDist(thumbTip, wrist) / scale;
                     const avgExt = (indexExt + middleExt + ringExt + pinkyExt) / 4;
 
                     const isIndexFolded = getDist(indexTip, wrist) < getDist(indexPip, wrist) * 1.05;
@@ -1747,23 +1734,27 @@
                     const isRingExt = !isRingFolded && ringExt > 1.3;
                     const isPinkyExt = !isPinkyFolded && pinkyExt > 1.3;
                     const fingerCount = [isIndexExt, isMiddleExt, isRingExt, isPinkyExt].filter(Boolean).length;
-                    const isFist = fingerCount === 0 && avgExt < 1.1;
+
+                    // Thumb up / thumb down: only meaningful when the other four fingers are
+                    // folded (otherwise it's just part of an open hand), and judged by whether
+                    // the thumb tip sits clearly above or below the wrist.
+                    const isThumbOut = thumbExt > 1.15;
+                    const thumbYOffset = (wrist.y - thumbTip.y) / scale;
+                    const isThumbUp = fingerCount === 0 && isThumbOut && thumbYOffset > 0.55;
+                    const isThumbDown = fingerCount === 0 && isThumbOut && thumbYOffset < -0.55;
+
+                    const isFist = fingerCount === 0 && avgExt < 1.1 && !isThumbOut;
+
+                    // Returning to a closed fist re-arms every discrete gesture (neutral reset between commands)
+                    if (isFist) {
+                        isVArmed = true;
+                        isShakaArmed = true;
+                        isBloomArmed = true;
+                        isBudArmed = true;
+                        isBackArmed = true;
+                    }
 
                     const isPurePointing = isIndexExt && !isMiddleExt && !isRingExt && !isPinkyExt;
-                    const isPurePinky = isPinkyExt && !isIndexExt && !isMiddleExt && !isRingExt;
-
-                    const thumbExt = getDist(thumbTip, wrist) / scale;
-                    const isThumbFolded = getDist(thumbTip, wrist) < getDist(thumbIP, wrist) * 1.12;
-                    const isThumbExt = !isThumbFolded && thumbExt > 1.1;
-                    const isThumbUp = isThumbExt && (thumbTip.y < wrist.y - 0.12);
-                    const isThumbDown = isThumbExt && (thumbTip.y > wrist.y + 0.12);
-                    const isFistBase = fingerCount === 0 && avgExt < 0.95;
-                    const isThumbsUpGesture = isFistBase && isThumbUp;
-                    const isThumbsDownGesture = isFistBase && isThumbDown;
-
-                    if (!isThumbsUpGesture) { isOpenInfoArmed = true; openInfoHoldCounter = 0; }
-                    if (!isThumbsDownGesture) { isBackArmed = true; backHoldCounter = 0; }
-                    if (!isPurePinky) { isCloseInfoArmed = true; closeInfoHoldCounter = 0; }
 
                     const yPos = indexTip.y;
                     if (yPos < 0.25) {
@@ -1776,156 +1767,235 @@
                     }
 
                     // Gesture: pointing at the top/bottom edge scrolls species (unchanged)
-                    if (isPurePointing && (yPos < 0.25 || yPos > 0.75) && totalSpecies > 1) {
+                    if (isPurePointing && (currentZone === 'top' || currentZone === 'bottom') && totalSpecies > 1) {
                         pointingHoldCounter++;
+                        bloomHoldCounter = 0;
+                        budHoldCounter = 0;
+                        vHoldCounter = 0;
+                        shakaHoldCounter = 0;
+
+                        const holdRatio = Math.min(1, pointingHoldCounter / 4);
                         canvasCtx.beginPath();
-                        canvasCtx.arc(indexTip.x * w, indexTip.y * h, 7, 0, Math.PI * 2);
-                        canvasCtx.fillStyle = '#10B981';
-                        canvasCtx.fill();
+                        canvasCtx.arc(indexTip.x * w, indexTip.y * h, 9, 0, Math.PI * 2);
+                        canvasCtx.strokeStyle = 'rgba(250, 246, 235, 0.55)';
+                        canvasCtx.lineWidth = 1.5;
+                        canvasCtx.stroke();
+                        canvasCtx.beginPath();
+                        canvasCtx.arc(indexTip.x * w, indexTip.y * h, 9, -Math.PI / 2, -Math.PI / 2 + holdRatio * Math.PI * 2);
+                        canvasCtx.strokeStyle = '#D4AF78';
+                        canvasCtx.lineWidth = 2;
+                        canvasCtx.stroke();
 
                         if (pointingHoldCounter >= 4 && isZoneArmed) {
                             if (currentZone === 'top') {
                                 goToSpecies(currentSpeciesIdx - 1);
                                 isZoneArmed = false;
                                 pointingHoldCounter = 0;
-                                statusLabel = "PREVIOUS SPECIES";
-                                statusColor = "#3B82F6";
-                                canvasCtx.fillStyle = 'rgba(59, 130, 246, 0.35)';
-                                canvasCtx.fillRect(0, 0, w, h * 0.25);
+                                statusLabel = "이전 품종";
+                                statusColor = "#8A9468";
+                                const flashTop = canvasCtx.createLinearGradient(0, 0, 0, h * 0.3);
+                                flashTop.addColorStop(0, 'rgba(138, 148, 104, 0.35)');
+                                flashTop.addColorStop(1, 'rgba(138, 148, 104, 0)');
+                                canvasCtx.fillStyle = flashTop;
+                                canvasCtx.fillRect(0, 0, w, h * 0.3);
                             } else if (currentZone === 'bottom') {
                                 goToSpecies(currentSpeciesIdx + 1);
                                 isZoneArmed = false;
                                 pointingHoldCounter = 0;
-                                statusLabel = "NEXT SPECIES";
-                                statusColor = "#3B82F6";
-                                canvasCtx.fillStyle = 'rgba(59, 130, 246, 0.35)';
-                                canvasCtx.fillRect(0, h * 0.75, w, h * 0.25);
+                                statusLabel = "다음 품종";
+                                statusColor = "#8A9468";
+                                const flashBottom = canvasCtx.createLinearGradient(0, h * 0.7, 0, h);
+                                flashBottom.addColorStop(0, 'rgba(138, 148, 104, 0)');
+                                flashBottom.addColorStop(1, 'rgba(138, 148, 104, 0.35)');
+                                canvasCtx.fillStyle = flashBottom;
+                                canvasCtx.fillRect(0, h * 0.7, w, h * 0.3);
                             }
                         } else if (!isZoneArmed) {
-                            statusLabel = "RETURN TO MIDDLE TO RESET";
-                            statusColor = "rgba(255, 255, 255, 0.5)";
+                            statusLabel = "중앙으로 돌아오세요";
+                            statusColor = "rgba(250, 246, 235, 0.6)";
                         }
                     }
-                    // Gesture: fist + thumb up -> open info panel (one-shot)
-                    else if (isThumbsUpGesture) {
-                        pointingHoldCounter = 0;
-                        openInfoHoldCounter++;
-                        canvasCtx.beginPath();
-                        canvasCtx.arc(thumbTip.x * w, thumbTip.y * h, 7, 0, Math.PI * 2);
-                        canvasCtx.fillStyle = '#8B5CF6';
-                        canvasCtx.fill();
+                    // Gesture 1: index finger only -> Bloom
+                    else if (fingerCount === 1 && isIndexExt) {
+                        bloomHoldCounter++;
+                        budHoldCounter = 0;
+                        vHoldCounter = 0;
+                        shakaHoldCounter = 0;
 
-                        if (openInfoHoldCounter >= 9 && isOpenInfoArmed) {
-                            isOpenInfoArmed = false;
-                            openInfoHoldCounter = 0;
-                            const sections = document.querySelectorAll('.species-section');
-                            const currentSection = sections[currentSpeciesIdx];
-                            const currentInfo = currentSection ? currentSection.querySelector('.info-wrapper') : null;
-                            currentInfo?.classList.add('force-show');
-                            statusLabel = "INFO OPENED";
-                            statusColor = "#8B5CF6";
-                        } else if (!isOpenInfoArmed) {
-                            statusLabel = "RELEASE TO RESET";
-                            statusColor = "rgba(255, 255, 255, 0.5)";
+                        if (bloomHoldCounter >= 6 && isBloomArmed) {
+                            isBloomArmed = false;
+                            bloomHoldCounter = 0;
+                            targetProgress = 1.0;
+                            statusLabel = "개화";
+                            statusColor = "#8A9468";
+                        } else if (!isBloomArmed) {
+                            statusLabel = "개화 유지";
+                            statusColor = "rgba(250, 246, 235, 0.55)";
                         } else {
-                            statusLabel = "HOLD: THUMB UP...";
-                            statusColor = "rgba(139, 92, 246, 0.7)";
+                            statusLabel = "1";
+                            statusColor = "#D4AF78";
                         }
                     }
-                    // Gesture: pinky finger only -> close info panel (one-shot)
-                    else if (isPurePinky) {
-                        pointingHoldCounter = 0;
-                        closeInfoHoldCounter++;
-                        canvasCtx.beginPath();
-                        canvasCtx.arc(pinkyTip.x * w, pinkyTip.y * h, 7, 0, Math.PI * 2);
-                        canvasCtx.fillStyle = '#8B5CF6';
-                        canvasCtx.fill();
+                    // Gesture 2: index + middle -> Bud
+                    else if (fingerCount === 2 && isIndexExt && isMiddleExt) {
+                        budHoldCounter++;
+                        bloomHoldCounter = 0;
+                        vHoldCounter = 0;
+                        shakaHoldCounter = 0;
 
-                        if (closeInfoHoldCounter >= 6 && isCloseInfoArmed) {
-                            isCloseInfoArmed = false;
-                            closeInfoHoldCounter = 0;
-                            const sections = document.querySelectorAll('.species-section');
-                            const currentSection = sections[currentSpeciesIdx];
-                            const currentInfo = currentSection ? currentSection.querySelector('.info-wrapper') : null;
-                            currentInfo?.classList.remove('force-show');
-                            statusLabel = "INFO CLOSED";
-                            statusColor = "#8B5CF6";
-                        } else if (!isCloseInfoArmed) {
-                            statusLabel = "RELEASE TO RESET";
-                            statusColor = "rgba(255, 255, 255, 0.5)";
+                        if (budHoldCounter >= 6 && isBudArmed) {
+                            isBudArmed = false;
+                            budHoldCounter = 0;
+                            targetProgress = 0.0;
+                            statusLabel = "봉오리";
+                            statusColor = "#8A9468";
+                        } else if (!isBudArmed) {
+                            statusLabel = "봉오리 유지";
+                            statusColor = "rgba(250, 246, 235, 0.55)";
                         } else {
-                            statusLabel = "HOLD: PINKY...";
-                            statusColor = "rgba(139, 92, 246, 0.7)";
+                            statusLabel = "2";
+                            statusColor = "#D4AF78";
                         }
                     }
-                    // Gesture: fist + thumb down -> back to home
-                    else if (isThumbsDownGesture) {
-                        pointingHoldCounter = 0;
+                    // Gesture: pinky finger only -> go back to island selection
+                    else if (fingerCount === 1 && isPinkyExt) {
                         backHoldCounter++;
-                        canvasCtx.beginPath();
-                        canvasCtx.arc(thumbTip.x * w, thumbTip.y * h, 7, 0, Math.PI * 2);
-                        canvasCtx.fillStyle = '#EF4444';
-                        canvasCtx.fill();
+                        bloomHoldCounter = 0;
+                        budHoldCounter = 0;
+                        vHoldCounter = 0;
+                        shakaHoldCounter = 0;
 
                         if (backHoldCounter >= 6 && isBackArmed) {
                             isBackArmed = false;
                             backHoldCounter = 0;
-                            statusLabel = "BACK TO HOME";
-                            statusColor = "#EF4444";
-                            btnBackHomeHawaii?.click();
+                            statusLabel = "뒤로 가기";
+                            statusColor = "#8A9468";
+                            goBackToHome();
                         } else if (!isBackArmed) {
-                            statusLabel = "RELEASE TO RESET";
-                            statusColor = "rgba(255, 255, 255, 0.5)";
+                            statusLabel = "뒤로 가는 중";
+                            statusColor = "rgba(250, 246, 235, 0.55)";
                         } else {
-                            statusLabel = "HOLD: THUMB DOWN...";
-                            statusColor = "rgba(239, 68, 68, 0.7)";
+                            statusLabel = "새끼손가락";
+                            statusColor = "#D4AF78";
                         }
                     }
-                    // Open/close hand -> continuous bloom control
+                    // Gesture: thumb up -> Open info panel
+                    else if (isThumbUp) {
+                        vHoldCounter++;
+                        bloomHoldCounter = 0;
+                        budHoldCounter = 0;
+                        shakaHoldCounter = 0;
+                        backHoldCounter = 0;
+
+                        if (vHoldCounter >= 6 && isVArmed) {
+                            isVArmed = false;
+                            vHoldCounter = 0;
+
+                            const sections = document.querySelectorAll('.species-section');
+                            const currentSection = sections[currentSpeciesIdx];
+                            const currentInfo = currentSection ? currentSection.querySelector('.info-wrapper') : null;
+                            if (currentInfo) {
+                                currentInfo.classList.add('force-show');
+                            }
+                            statusLabel = "정보 열림";
+                            statusColor = "#8A9468";
+                        } else if (!isVArmed) {
+                            statusLabel = "정보 여는 중";
+                            statusColor = "rgba(250, 246, 235, 0.55)";
+                        } else {
+                            statusLabel = "엄지 위";
+                            statusColor = "#D4AF78";
+                        }
+                    }
+                    // Gesture: thumb down -> Close info panel
+                    else if (isThumbDown) {
+                        shakaHoldCounter++;
+                        bloomHoldCounter = 0;
+                        budHoldCounter = 0;
+                        vHoldCounter = 0;
+                        backHoldCounter = 0;
+
+                        if (shakaHoldCounter >= 6 && isShakaArmed) {
+                            isShakaArmed = false;
+                            shakaHoldCounter = 0;
+
+                            const sections = document.querySelectorAll('.species-section');
+                            const currentSection = sections[currentSpeciesIdx];
+                            const currentInfo = currentSection ? currentSection.querySelector('.info-wrapper') : null;
+                            if (currentInfo) {
+                                currentInfo.classList.remove('force-show');
+                            }
+                            statusLabel = "정보 닫힘";
+                            statusColor = "#8A9468";
+                        } else if (!isShakaArmed) {
+                            statusLabel = "정보 닫는 중";
+                            statusColor = "rgba(250, 246, 235, 0.55)";
+                        } else {
+                            statusLabel = "엄지 아래";
+                            statusColor = "#D4AF78";
+                        }
+                    }
+                    // Neutral / transitioning
                     else {
+                        bloomHoldCounter = 0;
+                        budHoldCounter = 0;
+                        vHoldCounter = 0;
+                        shakaHoldCounter = 0;
                         pointingHoldCounter = 0;
-
-                        smoothedExt = (smoothedExt === null) ? avgExt : (smoothedExt * 0.75 + avgExt * 0.25);
-
-                        const OPEN_EXT = 1.75;
-                        const CLOSED_EXT = 0.85;
-                        const openness = Math.min(1, Math.max(0, (smoothedExt - CLOSED_EXT) / (OPEN_EXT - CLOSED_EXT)));
-                        targetProgress = openness;
-
-                        canvasCtx.beginPath();
-                        canvasCtx.arc(wrist.x * w, wrist.y * h, 6 + openness * 10, 0, Math.PI * 2);
-                        canvasCtx.fillStyle = 'rgba(245, 158, 11, 0.55)';
-                        canvasCtx.fill();
-
-                        statusLabel = isFist ? "BUD (CLOSED)" : (openness > 0.85 ? "BLOOM (OPEN)" : `OPENNESS ${Math.round(openness * 100)}%`);
-                        statusColor = "#F59E0B";
+                        backHoldCounter = 0;
+                        statusLabel = isFist ? "" : "";
                     }
                 } else {
-                    noHandCounter++;
-                    if (noHandCounter >= 15) {
-                        targetProgress = 0.0;
-                        pointingHoldCounter = 0;
-                        isZoneArmed = true;
-                        smoothedExt = null;
-                        isOpenInfoArmed = true;
-                        isCloseInfoArmed = true;
-                        isBackArmed = true;
-                        openInfoHoldCounter = 0;
-                        closeInfoHoldCounter = 0;
-                        backHoldCounter = 0;
-                        statusLabel = "NO HAND DETECTED";
-                    } else {
-                        statusLabel = "...";
-                    }
+                    targetProgress = 1.0;
+                    vHoldCounter = 0;
+                    shakaHoldCounter = 0;
+                    pointingHoldCounter = 0;
+                    bloomHoldCounter = 0;
+                    budHoldCounter = 0;
+                    backHoldCounter = 0;
+                    isVArmed = true;
+                    isShakaArmed = true;
+                    isZoneArmed = true;
+                    isBloomArmed = true;
+                    isBudArmed = true;
+                    isBackArmed = true;
+                    statusLabel = "";
                 }
 
-                canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.65)';
-                canvasCtx.fillRect(8, 8, w - 16, 20);
-                canvasCtx.fillStyle = statusColor;
-                canvasCtx.font = 'bold 9px sans-serif';
-                canvasCtx.textAlign = 'center';
-                canvasCtx.textBaseline = 'middle';
-                canvasCtx.fillText(statusLabel, w / 2, 18);
+                if (statusLabel) {
+                    canvasCtx.save();
+                    canvasCtx.font = '600 13px "Avant Garde", Avantgarde, "Century Gothic", CenturyGothic, sans-serif';
+                    canvasCtx.textAlign = 'center';
+                    canvasCtx.textBaseline = 'middle';
+                    const textWidth = canvasCtx.measureText(statusLabel).width;
+                    const pillW = Math.max(64, textWidth + 40);
+                    const pillH = 30;
+                    const pillX = w / 2 - pillW / 2;
+                    const pillY = h - pillH - 16;
+                    const r = pillH / 2;
+
+                    canvasCtx.beginPath();
+                    canvasCtx.moveTo(pillX + r, pillY);
+                    canvasCtx.arcTo(pillX + pillW, pillY, pillX + pillW, pillY + pillH, r);
+                    canvasCtx.arcTo(pillX + pillW, pillY + pillH, pillX, pillY + pillH, r);
+                    canvasCtx.arcTo(pillX, pillY + pillH, pillX, pillY, r);
+                    canvasCtx.arcTo(pillX, pillY, pillX + pillW, pillY, r);
+                    canvasCtx.closePath();
+                    canvasCtx.fillStyle = 'rgba(26, 24, 20, 0.55)';
+                    canvasCtx.fill();
+                    canvasCtx.lineWidth = 1;
+                    canvasCtx.strokeStyle = 'rgba(250, 246, 235, 0.18)';
+                    canvasCtx.stroke();
+
+                    canvasCtx.beginPath();
+                    canvasCtx.arc(pillX + 16, pillY + pillH / 2, 3, 0, Math.PI * 2);
+                    canvasCtx.fillStyle = statusColor;
+                    canvasCtx.fill();
+
+                    canvasCtx.fillStyle = 'rgba(250, 246, 235, 0.95)';
+                    canvasCtx.fillText(statusLabel, pillX + 16 + 12 + (pillW - 32) / 2, pillY + pillH / 2 + 1);
+                    canvasCtx.restore();
+                }
 
                 canvasCtx.restore();
             }
@@ -2028,20 +2098,114 @@
                 });
             }
 
+            let audioCtx = null;
             let isAudioPlaying = false;
+            let rippleLoopInterval = null;
+            let waveGain = null;
             const bgmAudio = document.getElementById('bgmAudio');
             if (bgmAudio) bgmAudio.volume = 0.35;
 
+            function playWaterDroplet() {
+                if (!audioCtx || audioCtx.state === 'suspended' || !isAudioPlaying) return;
+                
+                try {
+                    const now = audioCtx.currentTime;
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    
+                    const baseFreq = 450 + Math.random() * 650;
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(baseFreq, now);
+                    osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.45, now + 0.08 + Math.random() * 0.06);
+
+                    const filter = audioCtx.createBiquadFilter();
+                    filter.type = 'bandpass';
+                    filter.frequency.setValueAtTime(baseFreq * 0.8, now);
+                    filter.Q.setValueAtTime(4.0, now);
+
+                    const vol = 0.08 + Math.random() * 0.07;
+                    gain.gain.setValueAtTime(0.001, now);
+                    gain.gain.linearRampToValueAtTime(vol, now + 0.015);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12 + Math.random() * 0.08);
+
+                    osc.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start(now);
+                    osc.stop(now + 0.22);
+                } catch (e) {
+                    console.warn("Water drop synth error:", e);
+                }
+            }
+
             function toggleAmbientSound() {
                 try {
+                    if (!audioCtx) {
+                        const AudioContext = window.AudioContext || window.webkitAudioContext;
+                        audioCtx = new AudioContext();
+                    }
+
+                    if (audioCtx.state === 'suspended') {
+                        audioCtx.resume();
+                    }
+
                     if (!isAudioPlaying) {
                         isAudioPlaying = true;
+
                         if (bgmAudio) {
                             bgmAudio.currentTime = bgmAudio.currentTime || 0;
                             bgmAudio.play().catch(e => console.warn("BGM play failed:", e));
                         }
+
+                        const bufferSize = audioCtx.sampleRate * 2;
+                        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                        const output = noiseBuffer.getChannelData(0);
+                        for (let i = 0; i < bufferSize; i++) {
+                            output[i] = Math.random() * 2 - 1;
+                        }
+
+                        const noiseSource = audioCtx.createBufferSource();
+                        noiseSource.buffer = noiseBuffer;
+                        noiseSource.loop = true;
+
+                        const bandpass = audioCtx.createBiquadFilter();
+                        bandpass.type = 'bandpass';
+                        bandpass.frequency.setValueAtTime(650, audioCtx.currentTime);
+                        bandpass.Q.setValueAtTime(2.5, audioCtx.currentTime);
+
+                        const lfo = audioCtx.createOscillator();
+                        lfo.frequency.setValueAtTime(0.35, audioCtx.currentTime);
+
+                        const lfoGain = audioCtx.createGain();
+                        lfoGain.gain.setValueAtTime(350, audioCtx.currentTime);
+                        lfo.connect(lfoGain);
+                        lfoGain.connect(bandpass.frequency);
+
+                        waveGain = audioCtx.createGain();
+                        waveGain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+
+                        noiseSource.connect(bandpass);
+                        bandpass.connect(waveGain);
+                        waveGain.connect(audioCtx.destination);
+
+                        noiseSource.start();
+                        lfo.start();
+
+                        rippleLoopInterval = setInterval(() => {
+                            if (Math.random() > 0.15) playWaterDroplet();
+                            if (Math.random() > 0.5) setTimeout(playWaterDroplet, 60 + Math.random() * 120);
+                        }, 180);
+
                         soundBtn?.classList.add('playing');
                     } else {
+                        if (rippleLoopInterval) {
+                            clearInterval(rippleLoopInterval);
+                            rippleLoopInterval = null;
+                        }
+                        if (audioCtx) {
+                            audioCtx.suspend();
+                        }
                         if (bgmAudio) {
                             bgmAudio.pause();
                         }
@@ -2049,7 +2213,7 @@
                         isAudioPlaying = false;
                     }
                 } catch(e) {
-                    console.warn("Audio Error:", e);
+                    console.warn("Audio Context Error:", e);
                 }
             }
 
@@ -2057,47 +2221,35 @@
                 soundBtn.addEventListener('click', toggleAmbientSound);
             }
 
-            document.addEventListener('click', (e) => {
-                const infoBtn = e.target.closest('.info-btn');
-                if (infoBtn) {
-                    const wrapper = infoBtn.closest('.info-wrapper');
-                    wrapper?.classList.toggle('force-show');
-                }
-            });
+            function goBackToHome() {
+                if (cursorText) cursorText.innerText = '';
+                customCursor?.classList.remove('hover-discover');
+                pageE?.classList.add('transition-out');
 
-            if (btnBackHomeHawaii) {
-                btnBackHomeHawaii.addEventListener('click', () => {
-                    closeMap();
-                    if (cursorText) cursorText.innerText = '';
-                    customCursor?.classList.remove('hover-discover');
-                    pageE?.classList.add('transition-out');
-                    
-                    const gestureCanvas = document.getElementById('gestureCanvas');
-                    gestureCanvas?.classList.remove('active');
+                const gestureCanvas = document.getElementById('gestureCanvas');
+                gestureCanvas?.classList.remove('active');
+
+                setTimeout(() => {
+                    pageE?.classList.remove('active', 'transition-out');
+                    pageHome?.classList.add('transition-in-prep');
+                    pageHome?.classList.add('active');
+                    isHomeSceneActive = true;
+                    animateHomeScene();
 
                     setTimeout(() => {
-                        pageE?.classList.remove('active', 'transition-out');
-                        pageHome?.classList.add('transition-in-prep');
-                        pageHome?.classList.add('active');
-                        isHomeSceneActive = true;
-                        animateHomeScene();
-                        
-                        setTimeout(() => {
-                            pageHome?.classList.remove('transition-in-prep');
-                            resizeHomeSeabedScene();
-                        }, 50);
-                    }, 750);
-                });
+                        pageHome?.classList.remove('transition-in-prep');
+                        resizeHomeSeabedScene();
+                    }, 50);
+                }, 750);
             }
 
-            function closeMap() {
-                document.querySelectorAll('.info-wrapper').forEach(w => w.classList.remove('force-show'));
+            if (btnBackHomeHawaii) {
+                btnBackHomeHawaii.addEventListener('click', goBackToHome);
             }
 
             function goToSpecies(idx) {
                 if (idx < 0 || idx >= totalSpecies) return;
                 currentSpeciesIdx = idx;
-                closeMap();
                 document.querySelectorAll('.info-wrapper').forEach(w => w.classList.remove('force-show'));
                 
                 const archiveContainer = document.getElementById('archiveContainer');
@@ -2115,15 +2267,17 @@
                 });
 
                 const videos = document.querySelectorAll('.flower-video');
+                let activeVid = null;
                 videos.forEach((vid, vIdx) => {
-                    vid.pause();
                     if (vIdx === currentSpeciesIdx) {
-                        const startTime = Math.min(0.99, Math.max(0.01, currentProgress)) * (vid.duration || 0);
-                        if (!isNaN(startTime)) {
-                            vid.currentTime = startTime;
-                        }
+                        vid.currentTime = 0;
+                        vid.play().catch(() => {});
+                        activeVid = vid;
+                    } else {
+                        vid.pause();
                     }
                 });
+                currentFlowerVideo = activeVid;
             }
 
             if (pageE) {
