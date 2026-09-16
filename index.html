@@ -1104,6 +1104,7 @@
             <div class="guide-card">
                 <h3 class="guide-title">Gesture Navigation Guide</h3>
                 <p class="guide-subtitle">새로운 제스처 인터랙션을 이용해 꽃을 개화시키고 아카이브를 탐험해보세요.</p>
+                <p class="guide-subtitle" style="margin-top: -8px; opacity: 0.7;">동작 사이에는 주먹을 살짝 쥐었다 펴면 다음 제스처가 바로 인식돼요.</p>
                 
                 <div class="gesture-section-label">손가락 개수로 조작하세요</div>
                 <div class="gesture-numbers-row cols-2">
@@ -1632,6 +1633,7 @@
             let bloomHoldCounter = 0;
             let budHoldCounter = 0;
             let backHoldCounter = 0;
+            let fistHoldCounter = 0;
             let currentZone = 'middle';
             let currentFlowerVideo = null;
             let scrubFrameCount = 0;
@@ -1743,15 +1745,24 @@
                     const isThumbUp = fingerCount === 0 && isThumbOut && thumbYOffset > 0.55;
                     const isThumbDown = fingerCount === 0 && isThumbOut && thumbYOffset < -0.55;
 
-                    const isFist = fingerCount === 0 && avgExt < 1.1 && !isThumbOut;
+                    const isFist = fingerCount === 0 && avgExt < 1.05 && !isThumbOut;
 
-                    // Returning to a closed fist re-arms every discrete gesture (neutral reset between commands)
+                    // Returning to a closed fist re-arms every discrete gesture (neutral reset
+                    // between commands). This requires the fist to be held for a few consecutive
+                    // frames rather than firing on a single frame, so a hand that briefly and
+                    // naturally passes through a fist-like shape while moving between gestures
+                    // doesn't immediately re-arm and cause the flower to fire again right away.
                     if (isFist) {
-                        isVArmed = true;
-                        isShakaArmed = true;
-                        isBloomArmed = true;
-                        isBudArmed = true;
-                        isBackArmed = true;
+                        fistHoldCounter++;
+                        if (fistHoldCounter >= 5) {
+                            isVArmed = true;
+                            isShakaArmed = true;
+                            isBloomArmed = true;
+                            isBudArmed = true;
+                            isBackArmed = true;
+                        }
+                    } else {
+                        fistHoldCounter = 0;
                     }
 
                     const isPurePointing = isIndexExt && !isMiddleExt && !isRingExt && !isPinkyExt;
@@ -1953,6 +1964,7 @@
                     bloomHoldCounter = 0;
                     budHoldCounter = 0;
                     backHoldCounter = 0;
+                    fistHoldCounter = 0;
                     isVArmed = true;
                     isShakaArmed = true;
                     isZoneArmed = true;
@@ -2011,7 +2023,7 @@
                         });
                         hands.setOptions({
                             maxNumHands: 1,
-                            modelComplexity: 0,
+                            modelComplexity: 1,
                             minDetectionConfidence: 0.75,
                             minTrackingConfidence: 0.7
                         });
